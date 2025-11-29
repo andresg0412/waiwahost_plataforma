@@ -72,13 +72,13 @@ export class ReservasController {
       let statusCode = 500;
       let message = 'Error interno del servidor';
       if (error instanceof Error) {
-        if (error.message.includes('fecha') || 
-            error.message.includes('email') ||
-            error.message.includes('precio') ||
-            error.message.includes('huéspedes') ||
-            error.message.includes('principal') ||
-            error.message.includes('documento') ||
-            error.message.includes('nacimiento')) {
+        if (error.message.includes('fecha') ||
+          error.message.includes('email') ||
+          error.message.includes('precio') ||
+          error.message.includes('huéspedes') ||
+          error.message.includes('principal') ||
+          error.message.includes('documento') ||
+          error.message.includes('nacimiento')) {
           statusCode = 400;
           message = error.message;
         }
@@ -133,4 +133,3 @@ export class ReservasController {
 }
 
 export const reservasController = new ReservasController();
-      const { deleteReservaService } = await import('../services/reservas/deleteReservaService');

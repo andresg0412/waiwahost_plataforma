@@ -34,7 +34,7 @@ services:
     restart: always
     environment:
       INTERNAL_API_URL: http://backend:3001
-      NEXT_PUBLIC_API_URL: https://api.tu-dominio.com
+      NEXT_PUBLIC_API_URL: http://localhost/api
     networks:
       - waiwa-net
 
@@ -63,6 +63,7 @@ services:
 
 volumes:
   db_data:
+
 
 networks:
   waiwa-net:

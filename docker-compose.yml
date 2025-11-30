@@ -25,6 +25,11 @@ services:
       HOST: '0.0.0.0'
       DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       JWT_SECRET: ${JWT_SECRET}
+      PG_USER: ${DB_USER}
+      PG_PASSWORD: ${DB_PASSWORD}
+      PG_DATABASE: ${DB_NAME}
+      PG_PORT: ${PG_PORT}
+      PG_HOST: ${PG_HOST}
     depends_on:
       - db
     networks:
@@ -37,6 +42,7 @@ services:
     environment:
       INTERNAL_API_URL: http://backend:3001
       NEXT_PUBLIC_API_URL: http://localhost/api
+      API_URL: http://backend:3001
     networks:
       - waiwa-net
 

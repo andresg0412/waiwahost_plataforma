@@ -203,7 +203,7 @@ export class PagosRepository {
       data.concepto,
       data.descripcion,
       data.comprobante,
-      data.id_empresa,
+      reservaInfo.id_empresa,
       data.id_usuario_registro
     ];
 

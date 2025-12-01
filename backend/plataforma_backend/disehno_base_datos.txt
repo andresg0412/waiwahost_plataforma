@@ -198,16 +198,22 @@ VALUES ('ver_egresos','Ver egresos'),
 INSERT INTO roles_permissions (id_rol, id_permission)
 SELECT 1, id_permission FROM permissions;
 
+INSERT INTO roles_permissions (id_rol, id_permission) VALUES (1, 16);
+INSERT INTO roles_permissions (id_rol, id_permission) VALUES (1, 17);
 INSERT INTO roles_permissions (id_rol, id_permission) VALUES (1, 18);
+INSERT INTO roles_permissions (id_rol, id_permission) VALUES (1, 19);
+INSERT INTO roles_permissions (id_rol, id_permission) VALUES (1, 20);
+INSERT INTO roles_permissions (id_rol, id_permission) VALUES (1, 21);
 
 -- ADMINISTRADOR
 INSERT INTO roles_permissions (id_rol, id_permission)
 SELECT 3, id_permission FROM permissions
 WHERE key IN (
     'ver_dashboard',
-    'ver_inmuebles', 'crear_inmueble', 'editar_inmueble',
-    'ver_reservas', 'crear_reserva', 'editar_reserva',
-    'ver_reportes', 'ver_caja', 'ver_propietarios'
+    'ver_inmuebles',
+    'ver_reservas', 'crear_reserva', 'editar_reserva', 'eliminar_reserva',
+    'ver_reportes', 'ver_caja', 'ver_propietarios', 'ver_ingresos', 'ver_egresos',
+    'ver_disponibilidad', 'ver_huespedes', 'ver_usuarios'
 );
 
 -- PROPIETARIO

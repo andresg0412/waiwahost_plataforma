@@ -6,7 +6,7 @@ export const getHuespedesApi = async (id_empresa?: number): Promise<IHuespedTabl
   try {
     const url = id_empresa
       ? `/api/huespedes/getHuespedes?id_empresa=${id_empresa}`
-      : '/api/huespedes/getHuespedes';
+      : '/api/huespedes';
 
     const data = await apiFetch(url, {
       method: 'GET',
@@ -22,7 +22,7 @@ export const getHuespedesApi = async (id_empresa?: number): Promise<IHuespedTabl
 // Crear nuevo huésped
 export const createHuespedApi = async (huespedData: any): Promise<IHuespedTableData> => {
   try {
-    const data = await apiFetch('/api/huespedes', {
+    const data = await apiFetch('/api/huespedes/createHuesped', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export const editHuespedApi = async (id: number, huespedData: any): Promise<IHue
 
     console.log('Sending editable fields:', editableFields);
 
-    const data = await apiFetch(`/api/huespedes/${id}`, {
+    const data = await apiFetch(`/api/huespedes/editHuesped/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export const editHuespedApi = async (id: number, huespedData: any): Promise<IHue
 // Eliminar huésped
 export const deleteHuespedApi = async (id: number): Promise<void> => {
   try {
-    await apiFetch(`/api/huespedes/${id}`, {
+    await apiFetch(`/api/huespedes/deleteHuesped?id=${id}`, {
       method: 'DELETE',
     });
   } catch (error) {
@@ -84,7 +84,7 @@ export const deleteHuespedApi = async (id: number): Promise<void> => {
 // Obtener detalle de un huésped
 export const getHuespedDetalleApi = async (id: number): Promise<IHuespedDetailData> => {
   try {
-    const data = await apiFetch(`/api/huespedes/${id}`, {
+    const data = await apiFetch(`/api/huespedes/getHuespedDetalle?id=${id}`, {
       method: 'GET',
     });
 

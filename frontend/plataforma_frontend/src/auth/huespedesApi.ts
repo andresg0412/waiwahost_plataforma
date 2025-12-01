@@ -5,8 +5,8 @@ import { IHuespedTableData, IHuespedEditableFields, IHuespedDetailData } from '.
 export const getHuespedesApi = async (id_empresa?: number): Promise<IHuespedTableData[]> => {
   try {
     const url = id_empresa
-      ? `/api/huespedes?id_empresa=${id_empresa}`
-      : '/api/huespedes';
+      ? `/api/huespedes/getHuespedes?id_empresa=${id_empresa}`
+      : '/api/huespedes/getHuespedes';
 
     const data = await apiFetch(url, {
       method: 'GET',

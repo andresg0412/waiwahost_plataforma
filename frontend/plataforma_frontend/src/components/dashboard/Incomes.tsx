@@ -22,7 +22,7 @@ const Incomes: React.FC = () => {
   const [inmuebles, setInmuebles] = useState<InmuebleOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingInmuebles, setLoadingInmuebles] = useState(false);
-  
+
   // Modal state
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedIngreso, setSelectedIngreso] = useState<IIngreso | null>(null);
@@ -41,8 +41,8 @@ const Incomes: React.FC = () => {
     setLoadingInmuebles(true);
     try {
       const result = await apiFetch('/api/ingresos/getInmueblesFiltro');
-      if (result.success && Array.isArray(result.data)) {
-        const inmueblesList = result.data.map((inmueble: any) => ({
+      if (Array.isArray(result)) {
+        const inmueblesList = result.map((inmueble: any) => ({
           id: inmueble.id,
           nombre: inmueble.nombre
         }));
@@ -81,15 +81,15 @@ const Incomes: React.FC = () => {
       ]);
 
       // Procesar respuesta de ingresos
-      if (ingresosResult.success && Array.isArray(ingresosResult.data)) {
-        setIngresos(ingresosResult.data);
+      if (Array.isArray(ingresosResult)) {
+        setIngresos(ingresosResult);
       } else {
         setIngresos([]);
       }
 
       // Procesar respuesta de resumen
-      if (resumenResult.success && resumenResult.data) {
-        setResumen(resumenResult.data);
+      if (resumenResult) {
+        setResumen(resumenResult);
       } else {
         setResumen(null);
       }
@@ -132,9 +132,9 @@ const Incomes: React.FC = () => {
       </div>
 
       {/* Date Selector */}
-      <DateSelector 
-        selectedDate={selectedDate} 
-        onDateChange={handleDateChange} 
+      <DateSelector
+        selectedDate={selectedDate}
+        onDateChange={handleDateChange}
       />
 
       {/* Property Selector */}
@@ -146,8 +146,8 @@ const Incomes: React.FC = () => {
       />
 
       {/* Incomes Summary */}
-      <IncomesSummary 
-        resumen={resumen} 
+      <IncomesSummary
+        resumen={resumen}
         loading={loading}
         inmuebleSeleccionado={selectedInmueble}
       />

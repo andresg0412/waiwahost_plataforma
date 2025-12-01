@@ -22,7 +22,7 @@ const Deductions: React.FC = () => {
   const [inmuebles, setInmuebles] = useState<InmuebleOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingInmuebles, setLoadingInmuebles] = useState(false);
-  
+
   // Modal state
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedEgreso, setSelectedEgreso] = useState<IEgreso | null>(null);
@@ -41,8 +41,8 @@ const Deductions: React.FC = () => {
     setLoadingInmuebles(true);
     try {
       const result = await apiFetch('/api/egresos/getInmueblesFiltro');
-      if (result.success && Array.isArray(result.data)) {
-        const inmueblesList = result.data.map((inmueble: any) => ({
+      if (Array.isArray(result)) {
+        const inmueblesList = result.map((inmueble: any) => ({
           id: inmueble.id,
           nombre: inmueble.nombre
         }));
@@ -81,15 +81,15 @@ const Deductions: React.FC = () => {
       ]);
 
       // Procesar respuesta de egresos
-      if (egresosResult.success && Array.isArray(egresosResult.data)) {
-        setEgresos(egresosResult.data);
+      if (Array.isArray(egresosResult)) {
+        setEgresos(egresosResult);
       } else {
         setEgresos([]);
       }
 
       // Procesar respuesta de resumen
-      if (resumenResult.success && resumenResult.data) {
-        setResumen(resumenResult.data);
+      if (resumenResult) {
+        setResumen(resumenResult);
       } else {
         setResumen(null);
       }
@@ -132,9 +132,9 @@ const Deductions: React.FC = () => {
       </div>
 
       {/* Date Selector */}
-      <DateSelector 
-        selectedDate={selectedDate} 
-        onDateChange={handleDateChange} 
+      <DateSelector
+        selectedDate={selectedDate}
+        onDateChange={handleDateChange}
       />
 
       {/* Property Selector */}
@@ -146,8 +146,8 @@ const Deductions: React.FC = () => {
       />
 
       {/* Expenses Summary */}
-      <ExpensesSummary 
-        resumen={resumen} 
+      <ExpensesSummary
+        resumen={resumen}
         loading={loading}
         inmuebleSeleccionado={selectedInmueble}
       />

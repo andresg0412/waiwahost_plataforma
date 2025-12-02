@@ -30,6 +30,8 @@ services:
       PG_DATABASE: ${DB_NAME}
       PG_PORT: ${PG_PORT}
       PG_HOST: ${PG_HOST}
+    ports:
+      - "3001:3001"
     depends_on:
       - db
     networks:
@@ -50,6 +52,10 @@ services:
   formulario:
     build: ./frontend-formulario/formulario
     restart: always
+    ports:
+      - "3002:3002"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
     networks:
       - waiwa-net
 

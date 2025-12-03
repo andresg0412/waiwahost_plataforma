@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
     User, Mail, Phone, Calendar, Users, FileText, Check, ShieldCheck,
-    CreditCard, ChevronDown, ChevronUp, CheckCircle, AlertCircle, X
+    CreditCard, ChevronDown, ChevronUp, CheckCircle, AlertCircle, X, Building
 } from 'lucide-react';
 
 const CheckinFormContent = () => {
@@ -40,7 +40,9 @@ const CheckinFormContent = () => {
 
     const [errors, setErrors] = useState({});
     const [inmuebleInfo, setInmuebleInfo] = useState(null);
+    const [inmueblesList, setInmueblesList] = useState([]);
     const [loadingInmueble, setLoadingInmueble] = useState(false);
+    const [loadingList, setLoadingList] = useState(false);
     const [expandedGuest, setExpandedGuest] = useState(0);
     const [submitted, setSubmitted] = useState(false);
     const [submitError, setSubmitError] = useState('');
@@ -53,16 +55,36 @@ const CheckinFormContent = () => {
                 setFormData(prev => ({ ...prev, id_inmueble: id }));
                 fetchInmuebleInfo(id);
             }
+        } else {
+            fetchInmueblesList();
         }
     }, [inmuebleIdParam]);
 
-    const fetchInmuebleInfo = async (id) => {
+    const fetchInmueblesList = async () => {
         try {
-            setLoadingInmueble(true);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/inmuebles/public/${id}`);
+            setLoadingList(true);
+            const res = await fetch(`${process.env.API_URL || 'http://localhost:3003'}/inmuebles/public-list`);
             if (res.ok) {
                 const data = await res.json();
-                if (data.success) {
+                if (!data.isError) {
+                    setInmueblesList(data.data);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching inmuebles list:", error);
+        } finally {
+            setLoadingList(false);
+        }
+    };
+
+    const fetchInmuebleInfo = async (id) => {
+        if (!id) return;
+        try {
+            setLoadingInmueble(true);
+            const res = await fetch(`${process.env.API_URL || 'http://localhost:3003'}/inmuebles/public/${id}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (!data.isError) {
                     setInmuebleInfo(data.data);
                     setFormData(prev => ({ ...prev, id_empresa: data.data.id_empresa }));
                 }
@@ -71,6 +93,16 @@ const CheckinFormContent = () => {
             console.error("Error fetching inmueble:", error);
         } finally {
             setLoadingInmueble(false);
+        }
+    };
+
+    const handleInmuebleSelect = (e) => {
+        const id = parseInt(e.target.value);
+        setFormData(prev => ({ ...prev, id_inmueble: id }));
+        if (id) {
+            fetchInmuebleInfo(id);
+        } else {
+            setInmuebleInfo(null);
         }
     };
 
@@ -142,7 +174,7 @@ const CheckinFormContent = () => {
         const newErrors = {};
 
         if (!formData.id_inmueble) {
-            newErrors.id_inmueble = 'No se ha seleccionado un inmueble válido.';
+            newErrors.id_inmueble = 'Debes seleccionar un apartamento/alojamiento.';
         }
 
         if (formData.huespedes.length === 0) {
@@ -237,16 +269,48 @@ const CheckinFormContent = () => {
                     <div className="flex items-center justify-between p-6 border-b bg-white">
                         <div>
                             <h2 className="text-xl font-semibold text-gray-900">
-                                {inmuebleInfo ? `Registro - ${inmuebleInfo.nombre}` : 'Registro de Huéspedes'}
+                                CkeckIn
                             </h2>
-                            {inmuebleInfo && (
-                                <p className="text-sm text-gray-500 mt-1">{inmuebleInfo.direccion}</p>
-                            )}
                         </div>
                     </div>
 
                     {/* Cuerpo del Formulario */}
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
+
+                        {/* Selector de Inmueble */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Apartamento / Alojamiento *
+                            </label>
+                            <div className="relative">
+                                <Building className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                                <select
+                                    value={String(formData.id_inmueble)}
+                                    onChange={handleInmuebleSelect}
+                                    disabled={!!inmuebleIdParam || loadingList}
+                                    className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal appearance-none bg-white ${errors.id_inmueble ? 'border-red-300' : 'border-gray-300'} ${!!inmuebleIdParam ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                >
+                                    <option value="0">Selecciona un alojamiento</option>
+                                    {inmuebleIdParam ? (
+                                        loadingInmueble ? (
+                                            <option disabled>Cargando información...</option>
+                                        ) : inmuebleInfo ? (
+                                            <option value={String(inmuebleInfo.id_inmueble)}>{inmuebleInfo.nombre}</option>
+                                        ) : (
+                                            <option disabled>Inmueble no encontrado</option>
+                                        )
+                                    ) : (
+                                        inmueblesList.map(inmueble => (
+                                            <option key={inmueble.id_inmueble} value={String(inmueble.id_inmueble)}>
+                                                {inmueble.nombre}
+                                            </option>
+                                        ))
+                                    )}
+                                </select>
+                                <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
+                            </div>
+                            {errors.id_inmueble && <p className="text-red-500 text-xs mt-1">{errors.id_inmueble}</p>}
+                        </div>
 
                         {/* Sección Fechas y Huéspedes */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

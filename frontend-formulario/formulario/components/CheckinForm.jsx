@@ -10,6 +10,7 @@ import {
 const CheckinFormContent = () => {
     const searchParams = useSearchParams();
     const inmuebleIdParam = searchParams.get('inmueble');
+    const reservaIdParam = searchParams.get('reserva');
 
     const [formData, setFormData] = useState({
         id_inmueble: 0,
@@ -38,6 +39,8 @@ const CheckinFormContent = () => {
         terms: false
     });
 
+    const [reservaIdInput, setReservaIdInput] = useState('');
+    const [loadingReserva, setLoadingReserva] = useState(false);
     const [errors, setErrors] = useState({});
     const [inmuebleInfo, setInmuebleInfo] = useState(null);
     const [inmueblesList, setInmueblesList] = useState([]);
@@ -49,7 +52,10 @@ const CheckinFormContent = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (inmuebleIdParam) {
+        if (reservaIdParam) {
+            setReservaIdInput(reservaIdParam);
+            fetchReservaInfo(reservaIdParam);
+        } else if (inmuebleIdParam) {
             const id = parseInt(inmuebleIdParam);
             if (!isNaN(id)) {
                 setFormData(prev => ({ ...prev, id_inmueble: id }));
@@ -58,7 +64,7 @@ const CheckinFormContent = () => {
         } else {
             fetchInmueblesList();
         }
-    }, [inmuebleIdParam]);
+    }, [inmuebleIdParam, reservaIdParam]);
 
     const fetchInmueblesList = async () => {
         try {
@@ -96,6 +102,46 @@ const CheckinFormContent = () => {
         }
     };
 
+    const fetchReservaInfo = async (id) => {
+        if (!id) return;
+        try {
+            setLoadingReserva(true);
+            const res = await fetch(`${process.env.API_URL || 'http://localhost:3003'}/reservas/public/${id}`);
+
+            if (res.ok) {
+                const data = await res.json();
+                if (!data.isError && data.data) {
+                    const reserva = data.data.data;
+
+                    // Cargar info del inmueble asociado
+                    if (reserva.id_inmueble) {
+                        fetchInmuebleInfo(reserva.id_inmueble);
+                    }
+
+                    setFormData(prev => ({
+                        ...prev,
+                        id_inmueble: reserva.id_inmueble,
+                        fecha_inicio: reserva.fecha_inicio.split('T')[0],
+                        fecha_fin: reserva.fecha_fin.split('T')[0],
+                        numero_huespedes: reserva.numero_huespedes,
+                        huespedes: reserva.huespedes.length > 0 ? reserva.huespedes : prev.huespedes,
+                        precio_total: reserva.precio_total,
+                        total_reserva: reserva.total_reserva,
+                        total_pagado: reserva.total_pagado,
+                        estado: reserva.estado,
+                        observaciones: reserva.observaciones || '',
+                        id_empresa: reserva.id_empresa,
+                        plataforma_origen: reserva.plataforma_origen
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching reserva:", error);
+        } finally {
+            setLoadingReserva(false);
+        }
+    };
+
     const handleInmuebleSelect = (e) => {
         const id = parseInt(e.target.value);
         setFormData(prev => ({ ...prev, id_inmueble: id }));
@@ -103,6 +149,12 @@ const CheckinFormContent = () => {
             fetchInmuebleInfo(id);
         } else {
             setInmuebleInfo(null);
+        }
+    };
+
+    const handleReservaIdBlur = () => {
+        if (reservaIdInput && !reservaIdParam) {
+            fetchReservaInfo(reservaIdInput);
         }
     };
 
@@ -277,39 +329,66 @@ const CheckinFormContent = () => {
                     {/* Cuerpo del Formulario */}
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
 
-                        {/* Selector de Inmueble */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Apartamento / Alojamiento *
-                            </label>
-                            <div className="relative">
-                                <Building className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                                <select
-                                    value={String(formData.id_inmueble)}
-                                    onChange={handleInmuebleSelect}
-                                    disabled={!!inmuebleIdParam || loadingList}
-                                    className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal appearance-none bg-white ${errors.id_inmueble ? 'border-red-300' : 'border-gray-300'} ${!!inmuebleIdParam ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                                >
-                                    <option value="0">Selecciona un alojamiento</option>
-                                    {inmuebleIdParam ? (
-                                        loadingInmueble ? (
-                                            <option disabled>Cargando información...</option>
-                                        ) : inmuebleInfo ? (
-                                            <option value={String(inmuebleInfo.id_inmueble)}>{inmuebleInfo.nombre}</option>
+                        {/* Fila: Selector de Inmueble y ID Reserva */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Selector de Inmueble */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Apartamento / Alojamiento *
+                                </label>
+                                <div className="relative">
+                                    <Building className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                                    <select
+                                        value={String(formData.id_inmueble)}
+                                        onChange={handleInmuebleSelect}
+                                        disabled={!!inmuebleIdParam || loadingList || !!reservaIdParam}
+                                        className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal appearance-none bg-white ${errors.id_inmueble ? 'border-red-300' : 'border-gray-300'} ${(!!inmuebleIdParam || !!reservaIdParam) ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                    >
+                                        <option value="0">Selecciona un alojamiento</option>
+                                        {inmuebleIdParam || reservaIdParam ? (
+                                            loadingInmueble ? (
+                                                <option disabled>Cargando información...</option>
+                                            ) : inmuebleInfo ? (
+                                                <option value={String(inmuebleInfo.id_inmueble)}>{inmuebleInfo.nombre}</option>
+                                            ) : (
+                                                <option disabled>Inmueble no encontrado</option>
+                                            )
                                         ) : (
-                                            <option disabled>Inmueble no encontrado</option>
-                                        )
-                                    ) : (
-                                        inmueblesList.map(inmueble => (
-                                            <option key={inmueble.id_inmueble} value={String(inmueble.id_inmueble)}>
-                                                {inmueble.nombre}
-                                            </option>
-                                        ))
-                                    )}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
+                                            inmueblesList.map(inmueble => (
+                                                <option key={inmueble.id_inmueble} value={String(inmueble.id_inmueble)}>
+                                                    {inmueble.nombre}
+                                                </option>
+                                            ))
+                                        )}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-3 h-4 w-4 text-gray-400 pointer-events-none" />
+                                </div>
+                                {errors.id_inmueble && <p className="text-red-500 text-xs mt-1">{errors.id_inmueble}</p>}
                             </div>
-                            {errors.id_inmueble && <p className="text-red-500 text-xs mt-1">{errors.id_inmueble}</p>}
+
+                            {/* ID Reserva */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    ID Reserva (Opcional)
+                                </label>
+                                <div className="relative">
+                                    <FileText className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={reservaIdInput}
+                                        onChange={(e) => setReservaIdInput(e.target.value)}
+                                        onBlur={handleReservaIdBlur}
+                                        disabled={!!reservaIdParam || loadingReserva}
+                                        placeholder="Ingresa ID de reserva"
+                                        className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal ${!!reservaIdParam ? 'bg-gray-100 cursor-not-allowed' : ''} ${loadingReserva ? 'bg-gray-50' : ''}`}
+                                    />
+                                    {loadingReserva && (
+                                        <div className="absolute right-3 top-3">
+                                            <div className="animate-spin h-4 w-4 border-2 border-tourism-teal border-t-transparent rounded-full"></div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Sección Fechas y Huéspedes */}

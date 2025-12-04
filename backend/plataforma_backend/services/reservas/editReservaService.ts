@@ -12,16 +12,19 @@ export async function editReservaService(id: number, data: EditReservaRequest) {
     'fecha_fin',
     'numero_huespedes',
     'precio_total',
+    'total_reserva',
+    'total_pagado',
+    'total_pendiente',
     'estado',
     'observaciones',
     'plataforma_origen'
   ];
-  
+
   // Validar plataforma de origen si está presente
   if (data.plataforma_origen && !isPlataformaValida(data.plataforma_origen)) {
     throw new Error('La plataforma de origen especificada no es válida');
   }
-  
+
   const fieldsToUpdate: any = {};
   for (const key of editableFields) {
     if (data[key as keyof EditReservaRequest] !== undefined) {

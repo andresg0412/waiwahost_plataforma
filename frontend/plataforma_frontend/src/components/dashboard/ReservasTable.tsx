@@ -29,8 +29,14 @@ const ReservasTable: React.FC<ReservasTableProps> = ({
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
-    const date = new Date(dateString);
-    // isNaN(date.getTime()) es true si la fecha es inválida
+    // Si viene como string ISO (2025-12-14T00:00:00.000Z), tomar solo la parte de la fecha
+    const fechaParte = dateString.split('T')[0];
+    if (!fechaParte) return '-';
+
+    const [year, month, day] = fechaParte.split('-').map(Number);
+    // Crear fecha localmente usando los componentes (mes es 0-indexed)
+    const date = new Date(year, month - 1, day);
+
     if (isNaN(date.getTime())) return '-';
     return date.toLocaleDateString('es-ES');
   };

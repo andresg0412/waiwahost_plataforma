@@ -126,7 +126,14 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
 
   const onSubmit = async (data: IInmuebleForm) => {
     try {
-      await onCreate(data);
+      // Convertir comision a número, reemplazando coma por punto si es necesario
+      const formattedData = {
+        ...data,
+        comision: typeof data.comision === 'string'
+          ? parseFloat((data.comision as string).replace(',', '.'))
+          : data.comision
+      };
+      await onCreate(formattedData);
       if (!isEdit) {
         reset();
       }
@@ -317,17 +324,26 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Comisión *
+                  Porcentaje de Comisión *
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
                   {...register('comision', {
                     required: 'La comisión es requerida',
-                    min: { value: 0, message: 'Debe ser mayor o igual a 0' }
+                    validate: (value) => {
+                      if (!/^[0-9]*[.,]?[0-9]*$/.test(value.toString())) {
+                        return 'Solo se permiten números y decimales (punto o coma)';
+                      }
+                      return true;
+                    }
                   })}
+                  onKeyPress={(e) => {
+                    if (!/[0-9.,]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  placeholder="0.10"
+                  placeholder="10.5"
                 />
                 {errors.comision && (
                   <p className="text-red-500 text-xs mt-1">{errors.comision.message}</p>

@@ -175,7 +175,6 @@ export const editReservaSchema: FastifySchema = {
         items: {
           type: 'object',
           required: [
-            'documento_numero',
             'es_principal'
           ],
           properties: {
@@ -185,7 +184,7 @@ export const editReservaSchema: FastifySchema = {
             email: { type: ['string', 'null'] },
             telefono: { type: ['string', 'null'] },
             documento_tipo: { type: ['string', 'null'] },
-            documento_numero: { type: 'string', minLength: 1 },
+            documento_numero: { type: ['string', 'null'] },
             fecha_nacimiento: { type: ['string', 'null'] },
             es_principal: { type: 'boolean' }
           }

@@ -54,9 +54,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
 
   // Helper para verificar si un huésped tiene todos los datos completos
   const isGuestComplete = (huesped: IHuespedForm): boolean => {
-    return Boolean(
-      huesped.documento_numero?.trim()
-    );
+    return true; // No se requiere ningún dato obligatorio
   };
 
   const toggleGuest = (index: number) => {
@@ -159,10 +157,12 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
       for (let i = 0; i < formData.huespedes.length; i++) {
         const huesped = formData.huespedes[i];
 
+        /* Validación de documento eliminada a petición
         if (!huesped.documento_numero || !huesped.documento_numero.trim()) {
-          newErrors.huespedes = `El número de documento del huésped ${i + 1} es requerido`;
-          break;
+           newErrors.huespedes = `El número de documento del huésped ${i + 1} es requerido`;
+           break;
         }
+        */
 
         // Validaciones opcionales solo si se ingresan datos
         if (huesped.email && huesped.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(huesped.email)) {
@@ -502,7 +502,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
 
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Número de Documento *
+                              Número de Documento
                             </label>
                             <input
                               type="text"

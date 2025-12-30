@@ -10,3 +10,5 @@ backup_con_inserts.sql
 fix_database.sql
 frontend/plataforma_frontend/*.md
 frontend/plataforma_frontend/*.txt
+backend/plataforma_backend/*.md
+backend/plataforma_backend/*.txt

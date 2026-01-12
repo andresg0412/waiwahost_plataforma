@@ -1,8 +1,11 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { IInmuebleForm } from '../../interfaces/Inmueble';
 import { useAuth } from '../../auth/AuthContext';
+import { getPropietariosApi } from '../../auth/propietariosApi';
+import { IPropietarioTableData } from '../../interfaces/Propietario';
+import { getEmpresasApi } from '../../auth/getEmpresasApi';
+import { CIUDADES_COLOMBIA } from '../../constants/ciudades';
 
 interface CreateInmuebleModalProps {
   open: boolean;
@@ -20,15 +23,24 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
   isEdit = false
 }) => {
   const { user } = useAuth();
+  const [propietarios, setPropietarios] = useState<IPropietarioTableData[]>([]);
+  const [loadingPropietarios, setLoadingPropietarios] = useState(false);
+  const [empresas, setEmpresas] = useState<{ id_empresa: number; nombre: string }[]>([]);
+  const [loadingEmpresas, setLoadingEmpresas] = useState(false);
+
   const {
     register,
     handleSubmit,
+
     reset,
+    watch,
+    setValue, // Added setValue
     formState: { errors, isSubmitting }
   } = useForm<IInmuebleForm>({
     defaultValues: initialData || {
       nombre: '',
       direccion: '',
+      ciudad: '',
       edificio: '',
       apartamento: '',
       id_producto_sigo: '',
@@ -45,12 +57,65 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
   });
 
   useEffect(() => {
+    const fetchPropietarios = async () => {
+      try {
+        setLoadingPropietarios(true);
+        const data = await getPropietariosApi();
+        setPropietarios(data);
+      } catch (error) {
+        console.error('Error fetching propietarios:', error);
+      } finally {
+        setLoadingPropietarios(false);
+      }
+    };
+
+    const fetchEmpresas = async () => {
+      try {
+        setLoadingEmpresas(true);
+        const response = await getEmpresasApi();
+        if (response.success) {
+          setEmpresas(response.data);
+          // Si solo hay una empresa, seleccionarla automáticamente
+          if (response.data.length === 1) {
+            // Usamos setValue de react-hook-form si estuviéramos fuera del reset, 
+            // pero como esto corre al inicio, el reset inicial o el useEffect de abajo lo manejará.
+            // Sin embargo, para asegurar que se seleccione visualmente si ya se renderizó:
+            // setValue('id_empresa', response.data[0].id_empresa.toString());
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching empresas:', error);
+      } finally {
+        setLoadingEmpresas(false);
+      }
+    };
+
+    if (open) {
+      fetchPropietarios();
+      fetchEmpresas();
+    }
+  }, [open]);
+
+
+
+  // Efecto para pre-seleccionar empresa si solo hay una
+  useEffect(() => {
+    if (empresas.length === 1) {
+      reset(currentValues => ({
+        ...currentValues,
+        id_empresa: empresas[0].id_empresa.toString()
+      }));
+    }
+  }, [empresas, reset]);
+
+  useEffect(() => {
     if (open && initialData) {
       reset(initialData);
     } else if (open && !isEdit) {
       reset({
         nombre: '',
         direccion: '',
+        ciudad: '',
         edificio: '',
         apartamento: '',
         id_producto_sigo: '',
@@ -65,11 +130,21 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
         id_empresa: '1'
       });
     }
-  }, [open, initialData, isEdit, reset, user]);
+  }, [open, initialData, isEdit, reset]);
 
   const onSubmit = async (data: IInmuebleForm) => {
     try {
-      await onCreate(data);
+      // Convertir comision a número, reemplazando coma por punto si es necesario
+      const formattedData = {
+        ...data,
+        comision: typeof data.comision === 'string'
+          ? parseFloat((data.comision as string).replace(',', '.'))
+          : data.comision,
+        precio_limpieza: typeof data.precio_limpieza === 'string'
+          ? (data.precio_limpieza === '' ? 0 : parseInt(data.precio_limpieza as string, 10))
+          : data.precio_limpieza
+      };
+      await onCreate(formattedData);
       if (!isEdit) {
         reset();
       }
@@ -125,9 +200,8 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
                   type="text"
                   {...register('id_producto_sigo', { required: 'El ID del producto Sigo es requerido' })}
                   disabled={isEdit}
-                  className={`w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
-                    isEdit ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75' : ''
-                  }`}
+                  className={`w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white ${isEdit ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75' : ''
+                    }`}
                   placeholder="Ej: SIGO123"
                 />
                 {errors.id_producto_sigo && (
@@ -137,19 +211,41 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
             </div>
 
             {/* Dirección y ubicación */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Dirección *
-              </label>
-              <input
-                type="text"
-                {...register('direccion', { required: 'La dirección es requerida' })}
-                className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                placeholder="Ej: Calle 10 #5-20, Centro"
-              />
-              {errors.direccion && (
-                <p className="text-red-500 text-xs mt-1">{errors.direccion.message}</p>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Dirección *
+                </label>
+                <input
+                  type="text"
+                  {...register('direccion', { required: 'La dirección es requerida' })}
+                  className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  placeholder="Ej: Calle 10 #5-20, Centro"
+                />
+                {errors.direccion && (
+                  <p className="text-red-500 text-xs mt-1">{errors.direccion.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Ciudad *
+                </label>
+                <select
+                  {...register('ciudad', { required: 'La ciudad es requerida' })}
+                  className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Seleccione una ciudad</option>
+                  {CIUDADES_COLOMBIA.map((ciudad) => (
+                    <option key={ciudad} value={ciudad}>
+                      {ciudad}
+                    </option>
+                  ))}
+                </select>
+                {errors.ciudad && (
+                  <p className="text-red-500 text-xs mt-1">{errors.ciudad.message}</p>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -187,10 +283,10 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
             {/* Descripción */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Descripción *
+                Descripción
               </label>
               <textarea
-                {...register('descripcion', { required: 'La descripción es requerida' })}
+                {...register('descripcion')}
                 rows={3}
                 className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                 placeholder="Descripción del inmueble"
@@ -208,7 +304,7 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
                 </label>
                 <input
                   type="number"
-                  {...register('capacidad_maxima', { 
+                  {...register('capacidad_maxima', {
                     required: 'La capacidad máxima es requerida',
                     min: { value: 1, message: 'Debe ser mayor a 0' }
                   })}
@@ -226,7 +322,7 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
                 </label>
                 <input
                   type="number"
-                  {...register('habitaciones', { 
+                  {...register('habitaciones', {
                     required: 'Las habitaciones son requeridas',
                     min: { value: 0, message: 'Debe ser mayor o igual a 0' }
                   })}
@@ -244,7 +340,7 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
                 </label>
                 <input
                   type="number"
-                  {...register('banos', { 
+                  {...register('banos', {
                     required: 'Los baños son requeridos',
                     min: { value: 1, message: 'Debe tener al menos 1 baño' }
                   })}
@@ -261,17 +357,26 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Comisión *
+                  Porcentaje de Comisión *
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
-                  {...register('comision', { 
+                  type="text"
+                  {...register('comision', {
                     required: 'La comisión es requerida',
-                    min: { value: 0, message: 'Debe ser mayor o igual a 0' }
+                    validate: (value) => {
+                      if (!/^[0-9]*[.,]?[0-9]*$/.test(value.toString())) {
+                        return 'Solo se permiten números y decimales (punto o coma)';
+                      }
+                      return true;
+                    }
                   })}
+                  onKeyPress={(e) => {
+                    if (!/[0-9.,]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  placeholder="0.10"
+                  placeholder="10.5"
                 />
                 {errors.comision && (
                   <p className="text-red-500 text-xs mt-1">{errors.comision.message}</p>
@@ -283,10 +388,20 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
                   Precio Limpieza
                 </label>
                 <input
-                  type="number"
-                  {...register('precio_limpieza', { 
-                    min: { value: 0, message: 'Debe ser mayor o igual a 0' }
+                  type="text"
+                  {...register('precio_limpieza', {
+                    validate: (value) => {
+                      if (value && !/^[0-9]*$/.test(value.toString())) {
+                        return 'Solo se permiten números enteros';
+                      }
+                      return true;
+                    }
                   })}
+                  onKeyPress={(e) => {
+                    if (!/[0-9]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   placeholder="50000"
                 />
@@ -300,21 +415,42 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  ID Propietario *
+                  Propietario *
                   {isEdit && <span className="text-xs text-gray-500 ml-1">(No editable)</span>}
                 </label>
-                <input
-                  type="number"
-                  {...register('id_propietario', { 
-                    required: 'El ID del propietario es requerido',
-                    min: { value: 1, message: 'Debe ser mayor a 0' }
-                  })}
-                  disabled={isEdit}
-                  className={`w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
-                    isEdit ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75' : ''
-                  }`}
-                  placeholder="1"
-                />
+                {isEdit ? (
+                  <input
+                    type="text"
+                    disabled
+
+                    value={(() => {
+                      const currentId = watch('id_propietario');
+                      const selectedProp = propietarios.find(p => p.id.toString() == currentId?.toString());
+                      if (selectedProp) return `${selectedProp.nombre} ${selectedProp.apellido}`;
+                      return (initialData as any)?.propietario_nombre || 'Desconocido';
+                    })()}
+                    className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75"
+                  />
+                ) : (
+                  <>
+                    <select
+                      {...register('id_propietario', {
+                        required: 'El propietario es requerido',
+                      })}
+                      disabled={isEdit || loadingPropietarios}
+                      className={`w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white ${(isEdit || loadingPropietarios) ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75' : ''
+                        }`}
+                    >
+                      <option value="">Seleccione un propietario</option>
+                      {propietarios.map((prop) => (
+                        <option key={prop.id} value={prop.id}>
+                          {prop.nombre} {prop.apellido}
+                        </option>
+                      ))}
+                    </select>
+                    {loadingPropietarios && <p className="text-xs text-gray-500 mt-1">Cargando propietarios...</p>}
+                  </>
+                )}
                 {errors.id_propietario && (
                   <p className="text-red-500 text-xs mt-1">{errors.id_propietario.message}</p>
                 )}
@@ -322,21 +458,41 @@ const CreateInmuebleModal: React.FC<CreateInmuebleModalProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  ID Empresa *
-                  {isEdit && <span className="text-xs text-gray-500 ml-1">(No editable)</span>}
+                  Empresa *
+                  {(isEdit || empresas.length === 1) && <span className="text-xs text-gray-500 ml-1">(No editable)</span>}
                 </label>
-                <input
-                  type="number"
-                  {...register('id_empresa', { 
-                    required: 'El ID de la empresa es requerido',
-                    min: { value: 1, message: 'Debe ser mayor a 0' }
-                  })}
-                  disabled={isEdit}
-                  className={`w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
-                    isEdit ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75' : ''
-                  }`}
-                  placeholder="1"
-                />
+                {isEdit ? (
+                  <input
+                    type="text"
+                    disabled
+                    value={(() => {
+                      const currentId = watch('id_empresa');
+                      const selectedEmp = empresas.find(e => e.id_empresa.toString() == currentId?.toString());
+                      if (selectedEmp) return selectedEmp.nombre;
+                      return (initialData as any)?.empresa_nombre || 'Desconocido';
+                    })()}
+                    className="w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75"
+                  />
+                ) : (
+                  <>
+                    <select
+                      {...register('id_empresa', {
+                        required: 'La empresa es requerida',
+                      })}
+                      disabled={isEdit || loadingEmpresas || empresas.length === 1}
+                      className={`w-full p-2 border border-gray-300 rounded-md dark:border-gray-600 dark:bg-gray-700 dark:text-white ${(isEdit || loadingEmpresas || empresas.length === 1) ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-75' : ''
+                        }`}
+                    >
+                      <option value="">Seleccione una empresa</option>
+                      {empresas.map((emp) => (
+                        <option key={emp.id_empresa} value={emp.id_empresa}>
+                          {emp.nombre}
+                        </option>
+                      ))}
+                    </select>
+                    {loadingEmpresas && <p className="text-xs text-gray-500 mt-1">Cargando empresas...</p>}
+                  </>
+                )}
                 {errors.id_empresa && (
                   <p className="text-red-500 text-xs mt-1">{errors.id_empresa.message}</p>
                 )}

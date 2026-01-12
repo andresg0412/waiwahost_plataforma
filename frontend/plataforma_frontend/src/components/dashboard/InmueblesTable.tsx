@@ -73,7 +73,7 @@ const InmueblesTable: React.FC<InmueblesTableProps> = ({ inmuebles, onEdit, onDe
                   <div className="text-sm text-gray-900">{inmueble.apartamento}</div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{formatCurrency(inmueble.comision)}</div>
+                  <div className="text-sm text-gray-900">{inmueble.comision ? `${parseFloat(inmueble.comision.toString())}%` : '0%'}</div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{inmueble.id_propietario}</div>

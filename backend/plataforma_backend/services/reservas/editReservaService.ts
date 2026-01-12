@@ -12,16 +12,19 @@ export async function editReservaService(id: number, data: EditReservaRequest) {
     'fecha_fin',
     'numero_huespedes',
     'precio_total',
+    'total_reserva',
+    'total_pagado',
+    'total_pendiente',
     'estado',
     'observaciones',
     'plataforma_origen'
   ];
-  
+
   // Validar plataforma de origen si está presente
   if (data.plataforma_origen && !isPlataformaValida(data.plataforma_origen)) {
     throw new Error('La plataforma de origen especificada no es válida');
   }
-  
+
   const fieldsToUpdate: any = {};
   for (const key of editableFields) {
     if (data[key as keyof EditReservaRequest] !== undefined) {
@@ -36,7 +39,13 @@ export async function editReservaService(id: number, data: EditReservaRequest) {
   if (!updated) {
     throw new Error('No se pudo actualizar la reserva.');
   }
-  // TODO: Si se envían huéspedes, actualizar la relación huespedes-reserva
-  // (No implementado aquí, requiere lógica adicional)
+
+  // Si se envían huéspedes, actualizar sus datos
+  if (data.huespedes && data.huespedes.length > 0) {
+    const { HuespedesService } = await import('./huespedesService');
+    const huespedesService = new HuespedesService();
+    await huespedesService.updateHuespedesForReserva(id, data.huespedes);
+  }
+
   return updated;
 }

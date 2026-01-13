@@ -187,9 +187,16 @@ const Availability: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {inmueblesFiltrados.map(inmueble => (
+            {loading ? (
+              <tr><td colSpan={fechas.length + 1} className="text-center py-8">Cargando disponibilidad...</td></tr>
+            ) : error ? (
+              <tr><td colSpan={fechas.length + 1} className="text-center text-red-500 py-8">{error}</td></tr>
+            ) : inmueblesFiltrados.length === 0 ? (
+              <tr><td colSpan={fechas.length + 1} className="text-center py-8">No hay inmuebles para mostrar.</td></tr>
+            ) :
+            inmueblesFiltrados.map(inmueble => (
               <tr key={inmueble.id}>
-                <td className="px-2 py-2 border-b border-r sticky left-0 bg-white font-medium">
+                <td className="px-2 py-2.5 border-b border-r border-gray-200 font-medium whitespace-nowrap bg-white sticky left-0 z-10">
                   {inmueble.nombre}
                 </td>
                 {fechas.map(date => {

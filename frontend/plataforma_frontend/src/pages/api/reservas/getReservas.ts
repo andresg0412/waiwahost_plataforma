@@ -111,7 +111,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const token = req.headers.authorization?.replace('Bearer ', '') || '';
     
     // Extraer parámetros de query de la request
-    const { estado, id_empresa, fecha_inicio, fecha_fin } = req.query;
+    const { estado, id_empresa, id_inmueble, fecha_inicio, fecha_fin } = req.query;
     
     // Construir parámetros de query para la API externa
     const queryParams: Record<string, string> = {};
@@ -122,6 +122,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     
     if (id_empresa && typeof id_empresa === 'string') {
       queryParams.id_empresa = id_empresa;
+    }
+
+    if (id_inmueble && typeof id_inmueble === 'string') {
+      queryParams.id_inmueble = id_inmueble;
     }
     
     if (fecha_inicio && typeof fecha_inicio === 'string') {

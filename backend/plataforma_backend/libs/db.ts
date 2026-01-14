@@ -15,13 +15,26 @@ export default pool;
 /**
  * Obtiene los inmuebles filtrando por id si se provee
  */
-export async function getInmueblesDisponibles({ inmuebleId }: { inmuebleId?: string }) {
-  let query = 'SELECT id_inmueble as id, nombre FROM inmuebles';
+export async function getInmueblesDisponibles({ inmuebleId, idEmpresa }: { inmuebleId?: string; idEmpresa?: number }) {
+  let query = 'SELECT id_inmueble as id, nombre, ciudad FROM inmuebles';
+  const conditions: string[] = [];
   const params: any[] = [];
+  let paramIndex = 1;
+
   if (inmuebleId) {
-    query += ' WHERE id_inmueble = $1';
+    conditions.push(`id_inmueble = $${paramIndex++}`);
     params.push(inmuebleId);
   }
+
+  if (idEmpresa) {
+    conditions.push(`id_empresa = $${paramIndex++}`);
+    params.push(idEmpresa);
+  }
+
+  if (conditions.length > 0) {
+    query += ' WHERE ' + conditions.join(' AND ');
+  }
+
   const { rows } = await pool.query(query, params);
   return rows;
 }
@@ -30,7 +43,7 @@ export async function getInmueblesDisponibles({ inmuebleId }: { inmuebleId?: str
  * Obtiene las reservas de inmuebles en un rango de fechas, filtrando por inmueble y estado si aplica
  */
 export async function getReservasEnRango({ start, end, inmuebleId, estado }: { start: string; end: string; inmuebleId?: string; estado?: string }) {
-  let query = `SELECT id_inmueble as inmuebleId, fecha_inicio as start, fecha_fin as end, estado FROM reservas WHERE (fecha_inicio <= $2 AND fecha_fin >= $1)`;
+  let query = `SELECT id_reserva as id, id_inmueble as inmuebleId, fecha_inicio as start, fecha_fin as end, estado FROM reservas WHERE (fecha_inicio <= $2 AND fecha_fin >= $1)`;
   const params: any[] = [start, end];
   let paramIndex = 3;
   if (inmuebleId) {

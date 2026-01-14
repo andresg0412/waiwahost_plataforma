@@ -65,7 +65,6 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
   const loadInmuebles = async () => {
     try {
       setLoadingInmuebles(true);
-      console.log('🏠 Cargando inmuebles disponibles...');
       const inmueblesData = await getInmueblesApi();
 
       // Filtrar solo inmuebles disponibles/activos para reservas
@@ -74,7 +73,6 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
       );
 
       setInmuebles(inmueblesDisponibles);
-      console.log('✅ Inmuebles cargados:', inmueblesDisponibles.length);
     } catch (error) {
       console.error('❌ Error cargando inmuebles:', error);
       setInmuebles([]);

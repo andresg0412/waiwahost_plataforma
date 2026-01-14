@@ -19,7 +19,7 @@ export const externalApiServerFetch = async (
   token?: string
 ): Promise<any> => {
   const url = `${API_URL}${endpoint}`;
-  
+
   const headers: HeadersInit = {
     ...(options.headers || {}),
   };
@@ -27,7 +27,7 @@ export const externalApiServerFetch = async (
   // Solo agregar Content-Type para peticiones que tienen body
   const method = options.method?.toUpperCase() || 'GET';
   const hasBody = options.body !== undefined && options.body !== null;
-  
+
   if (hasBody || (method !== 'DELETE' && method !== 'GET' && method !== 'HEAD')) {
     (headers as Record<string, string>)['Content-Type'] = 'application/json';
   }
@@ -36,8 +36,6 @@ export const externalApiServerFetch = async (
   if (token) {
     (headers as Record<string, string>).Authorization = `Bearer ${token}`;
   }
-
-  console.log(`🔄 API Interna → API Externa: ${options.method || 'GET'} ${url}`);
 
   try {
     const response = await fetch(url, {
@@ -52,7 +50,6 @@ export const externalApiServerFetch = async (
     }
 
     const data = await response.json();
-    console.log(`✅ API Externa exitosa: ${url}`);
     return data;
 
   } catch (error) {
@@ -80,8 +77,5 @@ export const getEmpresaIdFromToken = (token?: string): string => {
   // Por ahora retornamos un valor por defecto
   // En producción, decodificar el JWT y extraer empresa_id
   const empresaId = '1';
-  console.log('🔍 getEmpresaIdFromToken llamada:');
-  console.log('  Token recibido:', token ? 'SÍ (length: ' + token.length + ')' : 'NO');
-  console.log('  Devolviendo empresa_id:', empresaId);
   return empresaId;
 };

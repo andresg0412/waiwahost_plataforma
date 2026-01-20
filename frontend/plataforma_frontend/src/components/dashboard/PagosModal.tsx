@@ -131,6 +131,7 @@ const PagosModal: React.FC<PagosModalProps> = ({
       
       // Resetear formulario
       setFormData({
+        fecha_pago: '',
         monto: 0,
         metodo_pago: 'efectivo',
         concepto: 'Pago de reserva',
@@ -286,6 +287,21 @@ const PagosModal: React.FC<PagosModalProps> = ({
                   placeholder="0"
                 />
                 {errors.monto && <p className="text-red-500 text-xs mt-1">{errors.monto}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha *
+                </label>
+                <input
+                  type="date"
+                  value={formData.fecha_pago || ''}
+                  onChange={(e) => handleInputChange('fecha_pago', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal ${
+                    errors.fecha_pago ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                />
+                {errors.fecha_pago && <p className="text-red-500 text-xs mt-1">{errors.fecha_pago}</p>}
               </div>
 
               <div>

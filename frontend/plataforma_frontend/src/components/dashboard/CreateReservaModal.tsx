@@ -5,6 +5,7 @@ import { IReservaForm, IHuespedForm } from '../../interfaces/Reserva';
 import { getInmueblesApi } from '../../auth/getInmueblesApi';
 import { IInmueble } from '../../interfaces/Inmueble';
 import { PLATAFORMAS_ORIGEN, PlataformaOrigen } from '../../constants/plataformas';
+import PhoneInput from '../atoms/PhoneInput';
 
 interface CreateReservaModalProps {
   open: boolean;
@@ -471,15 +472,11 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
                           </div>
 
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Teléfono
-                            </label>
-                            <input
-                              type="tel"
-                              value={huesped.telefono}
-                              onChange={(e) => handleHuespedChange(index, 'telefono', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal"
-                              placeholder="+57 300 123 4567"
+                            <PhoneInput
+                              label="Teléfono"
+                              value={huesped.telefono || ''}
+                              onChange={(value) => handleHuespedChange(index, 'telefono', value)}
+                              placeholder="300 123 4567"
                             />
                           </div>
 

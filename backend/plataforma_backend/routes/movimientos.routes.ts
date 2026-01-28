@@ -9,6 +9,7 @@ export async function movimientosRoutes(server: FastifyInstance, opts: FastifyPl
   // GET /movimientos/inmueble?id_inmueble={id}&fecha={fecha} - Obtener movimientos por inmueble y fecha
   server.get('/inmueble', { preHandler: [authMiddleware] }, movimientosController.getMovimientosByInmueble);
   
+  // Arreglar cantidad de Movimientos - Si es deducible no aparece en la lista
   // GET /movimientos/resumen/{fecha}?empresa_id={empresa_id} - Obtener resumen diario
   server.get('/resumen/:fecha', { preHandler: [authMiddleware] }, movimientosController.getResumenDiario);
   

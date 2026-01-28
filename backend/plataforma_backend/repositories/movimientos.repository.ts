@@ -94,6 +94,7 @@ export class MovimientosRepository {
         fecha,
         SUM(CASE WHEN tipo = 'ingreso' THEN monto ELSE 0 END) as total_ingresos,
         SUM(CASE WHEN tipo = 'egreso' THEN monto ELSE 0 END) as total_egresos,
+        SUM(CASE WHEN tipo = 'deducible' THEN monto ELSE 0 END) as total_deducibles,
         SUM(CASE WHEN tipo = 'ingreso' THEN monto ELSE -monto END) as balance,
         COUNT(*) as cantidad_movimientos
       FROM movimientos 
@@ -111,6 +112,7 @@ export class MovimientosRepository {
         fecha,
         total_ingresos: 0,
         total_egresos: 0,
+        total_deducibles: 0,
         balance: 0,
         cantidad_movimientos: 0
       };
@@ -119,6 +121,7 @@ export class MovimientosRepository {
       fecha: rows[0].fecha,
       total_ingresos: parseFloat(rows[0].total_ingresos) || 0,
       total_egresos: parseFloat(rows[0].total_egresos) || 0,
+      total_deducibles: parseFloat(rows[0].total_deducibles) || 0,
       balance: parseFloat(rows[0].balance) || 0,
       cantidad_movimientos: parseInt(rows[0].cantidad_movimientos) || 0
     };

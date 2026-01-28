@@ -91,11 +91,9 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
         // Helper para transformar fecha ISO a YYYY-MM-DD
         const toDateInput = (iso?: string) => {
           if (!iso) return '';
-          const d = new Date(iso);
-          // Ajuste de zona horaria para evitar desfase
-          const off = d.getTimezoneOffset();
-          d.setMinutes(d.getMinutes() - off);
-          return d.toISOString().slice(0, 10);
+          // Asumiendo que la fecha viene en formato ISO (YYYY-MM-DDTHH:mm:ss.sssZ)
+          // y queremos conservar la fecha exacta sin conversión de zona horaria local.
+          return iso.split('T')[0];
         };
 
         setFormData({

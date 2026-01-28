@@ -3,7 +3,7 @@ import { movimientosController } from '../controllers/movimientos.controller';
 import { authMiddleware } from '../middlewares/authMiddleware';
 
 export async function movimientosRoutes(server: FastifyInstance, opts: FastifyPluginOptions) {
-  // GET /movimientos/fecha/{fecha}?empresa_id={empresa_id}&plataforma_origen={plataforma} - Obtener movimientos por fecha
+  // GET /movimientos/fecha/{fecha}?empresa_id={empresa_id}&plataforma_origen={plataforma} - Obtener movimientos por fecha, solo tipo=ingreso&egreso 
   server.get('/fecha/:fecha', { preHandler: [authMiddleware] }, movimientosController.getMovimientosByFecha);
   
   // GET /movimientos/inmueble?id_inmueble={id}&fecha={fecha} - Obtener movimientos por inmueble y fecha

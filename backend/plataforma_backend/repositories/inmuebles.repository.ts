@@ -10,7 +10,8 @@ export class InmueblesRepository {
       SELECT i.id_inmueble, i.nombre, i.descripcion, i.direccion, i.ciudad, i.capacidad, 
              i.id_propietario, i.id_empresa, i.estado, i.edificio, i.apartamento,
              i.id_prod_sigo, i.comision, i.precio_limpieza, i.capacidad_maxima,
-             i.nro_habitaciones, i.nro_bahnos, i.cocina,
+             i.nro_habitaciones, i.nro_bahnos, i.cocina, i.rnt, i.tra_token, 
+             i.tipo_acomodacion, i.especificacion_acomodacion,
              e.nombre as empresa_nombre,
              u.nombre as propietario_nombre, u.email as propietario_email
       FROM inmuebles i
@@ -36,7 +37,8 @@ export class InmueblesRepository {
       SELECT i.id_inmueble, i.nombre, i.descripcion, i.direccion, i.ciudad, i.capacidad, 
              i.id_propietario, i.id_empresa, i.estado, i.edificio, i.apartamento,
              i.id_prod_sigo, i.comision, i.precio_limpieza, i.capacidad_maxima,
-             i.nro_habitaciones, i.nro_bahnos, i.cocina,
+             i.nro_habitaciones, i.nro_bahnos, i.cocina, i.rnt, i.tra_token, 
+             i.tipo_acomodacion, i.especificacion_acomodacion,
              e.nombre as empresa_nombre,
              u.nombre as propietario_nombre, u.email as propietario_email
       FROM inmuebles i
@@ -62,7 +64,8 @@ export class InmueblesRepository {
       SELECT i.id_inmueble, i.nombre, i.descripcion, i.direccion, i.ciudad, i.capacidad, 
              i.id_propietario, i.id_empresa, i.estado, i.edificio, i.apartamento,
              i.id_prod_sigo, i.comision, i.precio_limpieza, i.capacidad_maxima,
-             i.nro_habitaciones, i.nro_bahnos, i.cocina,
+             i.nro_habitaciones, i.nro_bahnos, i.cocina, i.rnt, i.tra_token, 
+             i.tipo_acomodacion, i.especificacion_acomodacion,
              e.nombre as empresa_nombre,
              u.nombre as propietario_nombre, u.email as propietario_email
       FROM inmuebles i
@@ -87,7 +90,8 @@ export class InmueblesRepository {
       SELECT i.id_inmueble, i.nombre, i.descripcion, i.direccion, i.ciudad, i.capacidad, 
              i.id_propietario, i.id_empresa, i.estado, i.edificio, i.apartamento,
              i.id_prod_sigo, i.comision, i.precio_limpieza, i.capacidad_maxima,
-             i.nro_habitaciones, i.nro_bahnos, i.cocina,
+             i.nro_habitaciones, i.nro_bahnos, i.cocina, i.rnt, i.tra_token, 
+             i.tipo_acomodacion, i.especificacion_acomodacion,
              e.nombre as empresa_nombre,
              u.nombre as propietario_nombre, u.email as propietario_email
       FROM inmuebles i

@@ -18,9 +18,9 @@ import {
   editReservaApi,
   deleteReservaApi
 } from '../../auth/reservasApi';
-import { getEstadoTarjetaApi } from '../../auth/tarjetaRegistroApi';
+import { getEstadoTarjetaApi, sendTarjetaApi } from '../../auth/tarjetaRegistroApi';
 import { useReservasConTotales } from '../../hooks/useReservasConTotales';
-import { IEstadoTarjetaResponse } from '@libs/interfaces/Tarjeta';
+import { IEstadoTarjetaResponse, IPayloadTarjeta } from '@libs/interfaces/Tarjeta';
 
 const Bookings: React.FC = () => {
   // Hook personalizado para manejar reservas con totales automáticos
@@ -202,36 +202,19 @@ const Bookings: React.FC = () => {
 
 
 
-  const handleTarjetaSubmit = async (tarjetaData: any) => {
+  const handleTarjetaSubmit = async (idReserva: number) => {
     if (!reservaToViewTarjeta) return;
 
     try {
-      const body: any = {
-        ...tarjetaData,
-        id: reservaToViewTarjeta.id,
-        codigo_reserva: reservaToViewTarjeta.codigo_reserva,
-        fecha_creacion: reservaToViewTarjeta.fecha_creacion,
-        fecha_vencimiento: tarjetaData.fecha_vencimiento,
-        numero_tarjeta: tarjetaData.numero_tarjeta,
-        cvv: tarjetaData.cvv,
-        nombre_titular: tarjetaData.nombre_titular,
-        tipo_tarjeta: tarjetaData.tipo_tarjeta
-      };
-      const updatedTarjeta = await getEstadoTarjetaApi(body);
+      const updatedTarjeta = await sendTarjetaApi(idReserva);
 
-      setTarjetas((prevTarjetas) =>
-        prevTarjetas.map((tarjeta) =>
-          tarjeta.id === updatedTarjeta.id ? updatedTarjeta : tarjeta
-        )
-      );
-
-      setSuccessMsg('Tarjeta actualizada exitosamente');
+      setSuccessMsg('Tarjeta enviada a Mincit');
       setSuccessOpen(true);
       setTarjetaModalOpen(false);
-      setReservaToViewTarjeta(null);
+      setReservaToViewTarjeta(updatedTarjeta);
     } catch (error) {
-      console.error('Error editando tarjeta:', error);
-      alert(error instanceof Error ? error.message : 'Error al actualizar tarjeta');
+      console.error('Error al enviar tarjeta:', error);
+      alert(error instanceof Error ? error.message : 'Error al enviar tarjeta');
     }
   };
 

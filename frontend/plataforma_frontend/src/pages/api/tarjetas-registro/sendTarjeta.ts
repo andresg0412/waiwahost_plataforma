@@ -10,13 +10,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ success: false, message: 'ID de reserva inválido' });
     }
 
-    if (method !== 'GET') {
+    if (method !== 'POST') {
         return res.status(405).json({ success: false, message: 'Método no permitido' });
     }
 
     try {
         const response = await fetch(`${apiUrl}/tarjeta-registro/${id}`, {
-            method: 'GET',
+            method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
@@ -31,17 +31,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
         }
 
-        const data = await response.json(); // Estructura: { isError, data, message }
+        const data = await response.json(); 
 
-        // Retornamos al frontend con el formato que tus otros proxys usan
         return res.status(200).json({
             success: !data.isError,
-            data: data.data, // El array de estados
+            data: data.data, 
             message: data.message
         });
 
     } catch (error) {
-        console.error(`❌ Error en Proxy /api/tarjeta-registro/${id}:`, error);
+        console.error(`❌ Error en Proxy /api/tarjeta-registro/sendTarjeta/${id}:`, error);
         return res.status(500).json({
             success: false,
             message: error instanceof Error ? error.message : 'Error interno del servidor'

@@ -24,15 +24,22 @@ export default function TarjetaModal({
     useEffect(() => {
         const fetchData = async () => {
             if (open && reserva) {
+                setTarjetasRegistro([]);
+                setPayloadTarjeta(null);
                 setLoading(true);
+
                 try {
                     const tarjetasData = await getTarjetaRegistroApi(reserva.id);
+                    
                     if (Array.isArray(tarjetasData) && tarjetasData.length > 0) {
                         setTarjetasRegistro(tarjetasData);
-                        setPayloadTarjeta(tarjetasData[0].payload); // Cargamos el payload del primero
+                        setPayloadTarjeta(tarjetasData[0].payload);
+                    } else {
+                        setPayloadTarjeta(null);
                     }
                 } catch (error) {
                     console.error('Error al cargar:', error);
+                    setPayloadTarjeta(null);
                 } finally {
                     setLoading(false);
                 }
@@ -44,11 +51,12 @@ export default function TarjetaModal({
 
     if (!open) return null;
 
+    
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden relative animate-in fade-in zoom-in duration-200">
         
-        {/* Header con estilo profesional */}
         <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
             <div>
                 <h2 className="text-xl font-bold text-slate-800">Tarjeta de Alojamiento (TRA)</h2>
@@ -73,7 +81,6 @@ export default function TarjetaModal({
             ) : payloadTarjeta ? (
                 <div className="space-y-6">
                     
-                    {/* Sección 1: Establecimiento */}
                     <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -87,7 +94,6 @@ export default function TarjetaModal({
                         </div>
                     </div>
 
-                    {/* Sección 2: El Huésped */}
                     <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                         <div className="col-span-2 border-b border-slate-100 pb-1">
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-tight">Datos del Huésped</h3>
@@ -111,7 +117,6 @@ export default function TarjetaModal({
                         </div>
                     </div>
 
-                    {/* Sección 3: Detalles de la Estancia */}
                     <div className="grid grid-cols-3 gap-4 bg-white">
                         <div className="col-span-3 border-b border-slate-100 pb-1">
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-tight">Detalles de Alojamiento</h3>
@@ -141,12 +146,12 @@ export default function TarjetaModal({
                 </div>
             ) : (
                 <div className="text-center py-10">
+                    <p><strong>Confirma la Reserva, antes de proceder a enviar los datos de la tarjeta de Alojamiento.</strong></p>
                     <p className="text-slate-500 italic">No se encontró información de la tarjeta para esta reserva.</p>
                 </div>
             )}
         </div>
 
-        {/* Footer con acciones claras */}
         <div className="bg-slate-50 px-6 py-4 flex justify-between gap-3 border-t border-slate-200">
             <button 
                 onClick={onClose} 
@@ -156,7 +161,6 @@ export default function TarjetaModal({
             </button>
             <div className="flex gap-2">
                 <button 
-                    disabled={true}
                     onClick={() => window.print()} 
                     className="px-5 py-2 text-sm font-semibold border border-slate-300 text-slate-700 hover:bg-white rounded-lg transition-all flex items-center gap-2"
                 >
@@ -164,7 +168,7 @@ export default function TarjetaModal({
                     Imprimir
                 </button>
                 <button 
-                    onClick={() => onSubmit(payloadTarjeta)}
+                    onClick={() => onSubmit(tarjetasRegistro[0].id_reserva)}
                     className="px-5 py-2 text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700 rounded-lg shadow-md transition-all flex items-center gap-2"
                 >
                     Enviar TRA

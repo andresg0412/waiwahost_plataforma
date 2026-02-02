@@ -3,6 +3,8 @@ import { TarjetaRegistroRepository } from '../../repositories/tarjetaRegistro.re
 import { InmueblesRepository } from '../../repositories/inmuebles.repository';
 
 import type { EstadoTarjeta } from '../../interfaces/tarjetaRegistro.interface';
+import type { Inmueble } from '../../interfaces/inmueble.interface';
+import type { TarjetaRegistro } from '../../interfaces/tarjetaRegistro.interface';
 
 import axios from 'axios';
 
@@ -100,8 +102,10 @@ export class TarjetaRegistroService {
    * @param id_reserva - ID de la reserva.
    * @returns Un array de tarjetas de registro.
    */
-  async findByReserva(id_reserva: number) {
-    return await this.tarjetaRepo.findByReserva(id_reserva);
+  async findByReserva(idReserva: number) {
+    const tarjeta = await this.tarjetaRepo.findByReserva(idReserva);
+    if (!tarjeta) throw new Error('Tarjeta no encontrada');
+    return tarjeta;
   }
 
   /**
@@ -127,18 +131,12 @@ export class TarjetaRegistroService {
    * @param id - ID de la tarjeta de registro.
    * @returns La tarjeta de registro actualizada.
    */
-  private async enviarAMincit(reservaId: number) {
-    const tarjeta = await this.tarjetaRepo.findByReserva(reservaId);
-    const inmueble = await this.inmueblesRepo.getInmuebleById(reservaId);
+  private async enviarAMincit(tarjeta: TarjetaRegistro, inmueble: Inmueble) {
+    if (!inmueble.tra_token) throw new Error('Token de tarjeta de alojamiento no encontrado');
 
-    if (!tarjeta) throw new Error('Tarjeta no encontrada');
-    if (!inmueble) throw new Error('Inmueble no encontrado');
-
-    if (!inmueble.data.tra_token) throw new Error('Token de tarjeta de alojamiento no encontrado');
-
-    if(tarjeta[0].estado === 'pendiente' || tarjeta[0].estado === 'reintento') {
-      const principal = tarjeta[0].payload;
-      const token = inmueble.data.tra_token;
+    if(tarjeta.estado === 'pendiente' || tarjeta.estado === 'reintento') {
+      const principal = tarjeta.payload;
+      const token = inmueble.tra_token;
 
       const res = await axios.post('https://pms.mincit.gov.co/one/', principal, {
           headers: { 'Authorization': `token ${token}` }
@@ -159,16 +157,50 @@ export class TarjetaRegistroService {
    * @param extra - Datos adicionales para actualizar.
    * @returns La tarjeta de registro actualizada.
    */
-  async updateEstadoTarjeta(
-    idReserva: number,
-    estado: EstadoTarjeta,
-    extra?: {
-      respuesta_tra?: unknown;
-      ultimo_error?: string;
-      intentos?: number;
+  async updateEstadoTarjeta(idReserva: number) {
+    const tarjeta = await this.tarjetaRepo.findByReserva(idReserva);
+    if (!tarjeta) throw new Error('Tarjeta no encontrada');
+
+    const responseInmueble = await this.inmueblesRepo.getInmuebleById(tarjeta.id_inmueble);
+    const inmueble = responseInmueble.data;
+
+    if (!inmueble || !inmueble.tra_token) {
+      throw new Error('Inmueble o Token TRA no encontrado');
     }
-  ) {
-    return await this.tarjetaRepo.updateEstadoTarjeta(idReserva, estado, extra);
+
+    if (['pendiente', 'reintento', 'error'].includes(tarjeta.estado)) {
+      try {
+        const parentCode = await this.enviarAMincit(tarjeta.payload, inmueble.tra_token);
+        const extra = {
+          respuesta_tra: { parentCode },
+          intentos: (tarjeta.intentos || 0) + 1,
+          ultimo_error: null,
+          updated_at: new Date().toISOString(),
+        };
+
+
+        if(!parentCode) {
+          return await this.tarjetaRepo.updateEstadoTarjeta(idReserva, 'error', extra);
+        }
+
+      
+        return await this.tarjetaRepo.updateEstadoTarjeta(idReserva, 'confirmado', extra);
+
+      } catch (error: any) {
+        const errorMsg = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+        
+        const extraError = {
+          intentos: (tarjeta.intentos || 0) + 1,
+          ultimo_error: errorMsg,
+          updated_at: new Date().toISOString(),
+        };
+
+        await this.tarjetaRepo.updateEstadoTarjeta(idReserva, 'error', extraError);
+        throw new Error(`Error en comunicación con MINCIT: ${errorMsg}`);
+      }
+    }
+
+    return `La tarjeta ya se encuentra en estado: ${tarjeta.estado}`;
   }
 
 }

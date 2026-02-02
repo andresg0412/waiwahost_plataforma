@@ -1,9 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { TarjetaRegistroService } from '../services/reservas/tarjetaRegistroService';
-
 import { successResponse, errorResponse } from '../libs/responseHelper';
 
-import { GetTarjetaQuery } from '../interfaces/tarjetaRegistro.interface';
 
 export class TarjetaRegistroController {
     /** 
@@ -13,67 +11,76 @@ export class TarjetaRegistroController {
         try {
             const ctx = (request as any).userContext || (request as any).user?.userContext;
             if (!ctx) {
-                return reply.code(401).send(errorResponse({ message: 'No autenticado o token inválido', code: 401 }));
+                return reply.code(401).send(errorResponse({ message: 'No autenticado', code: 401 }));
             }
+        
+            const { id } = request.params as { id: string };
+            const idReserva = parseInt(id);
+        
+            if (isNaN(idReserva)) {
+                return reply.code(400).send(errorResponse({ message: 'ID de reserva inválido', code: 400 }));
+            }
+        
             const tarjetaRegistroService = new TarjetaRegistroService();
-            const tarjeta = await tarjetaRegistroService.enviarAMincit(ctx.id_usuario);
+            
+            const resultado = await tarjetaRegistroService.updateEstadoTarjeta(idReserva);
+        
             const response = {
                 isError: false,
-                data: tarjeta,
-                message: 'Tarjeta de alojamiento enviada exitosamente'
+                data: resultado,
+                message: 'Proceso de envío a MINCIT finalizado'
             };
-            reply.code(200).send(response);
-        } catch (error) {
+        
+            return reply.code(200).send(successResponse(response, 200));
+        
+        } catch (error: any) {
             console.error('Error en TarjetaRegistroController.enviarTarjetaAlojamiento:', error);
-            const response = errorResponse({
-                message: 'Error interno del servidor',
+            
+            return reply.code(500).send(errorResponse({
+                message: error.message || 'Error interno al procesar el envío',
                 code: 500
-            });
-            reply.code(500).send(response);
+            }));
         }
     }
 
-
-
-  /**
-   * Controlador para obtener tarjetas de registro
-   * GET /tarjetaRegistro
-   */
-  async getReservas(request: FastifyRequest, reply: FastifyReply) {
-    try {
-      const ctx = (request as any).userContext || (request as any).user?.userContext;
-      if (!ctx) {
-        return reply.code(401).send(errorResponse({ message: 'No autenticado o token inválido', code: 401 }));
-      }
-      const getReservasService = new GetReservasService();
-      const filters = request.query as GetReservasQuery;
-      // Lógica superadmin: si es superadmin y empresaId es null, no filtrar por empresa
-      if (ctx.id_roles === 1 && (ctx.empresaId === null || ctx.empresaId === undefined)) {
-        // superadmin: no filtrar por empresa
-        delete filters.id_empresa;
-      } else {
-        const id_empresa = ctx.empresaId;
-        if (!id_empresa) {
-          return reply.code(401).send(errorResponse({ message: 'No autenticado o token inválido', code: 401 }));
+    /**
+     * Controlador para obtener tarjeta de alojamiento
+     */
+    async getTarjetaAlojamiento(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const ctx = (request as any).userContext || (request as any).user?.userContext;
+            if (!ctx) {
+                return reply.code(401).send(errorResponse({ message: 'No autenticado', code: 401 }));
+            }
+        
+            const { id } = request.params as { id: string };
+            const idReserva = parseInt(id);
+        
+            if (isNaN(idReserva)) {
+                return reply.code(400).send(errorResponse({ message: 'ID de reserva inválido', code: 400 }));
+            }
+        
+            const tarjetaRegistroService = new TarjetaRegistroService();
+            
+            const resultado = await tarjetaRegistroService.findByReserva(idReserva);
+        
+            const response = {
+                isError: false,
+                data: resultado,
+                message: 'Proceso de envío a MINCIT finalizado'
+            };
+        
+            return reply.code(200).send(successResponse(response, 200));
+        
+        } catch (error: any) {
+            console.error('Error en TarjetaRegistroController.getTarjetaAlojamiento:', error);
+            
+            return reply.code(500).send(errorResponse({
+                message: error.message || 'Error interno al procesar el envío',
+                code: 500
+            }));
         }
-        filters.id_empresa = id_empresa;
-      }
-      const reservas = await getReservasService.execute(filters);
-      const response = {
-        isError: false,
-        data: reservas,
-        message: 'Reservas obtenidas exitosamente'
-      };
-      reply.code(200).send(response);
-    } catch (error) {
-      console.error('Error en ReservasController.getReservas:', error);
-      const response = errorResponse({
-        message: 'Error interno del servidor',
-        code: 500
-      });
-      reply.code(500).send(response);
     }
-  }
 }
 
 export const tarjetaRegistroController = new TarjetaRegistroController();

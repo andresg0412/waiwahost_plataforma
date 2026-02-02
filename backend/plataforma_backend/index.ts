@@ -20,6 +20,7 @@ import pagosRoutes from './routes/pagos.routes';
 import { reportesRoutes } from './routes/reportes.routes';
 import totalesReservaRoutes from './routes/totalesReserva.routes';
 import { huespedesRoutes } from './routes/huespedes.routes';
+import { tarjetaRegistroRoutes } from './routes/tarjetaRegistro.routes';
 
 import { errorHandler } from './middlewares/errorHandler';
 
@@ -74,6 +75,7 @@ server.register(pagosRoutes);
 server.register(totalesReservaRoutes, { prefix: '/admin/totales-reservas' });
 server.register(reportesRoutes, { prefix: '/reportes' });
 server.register(huespedesRoutes, { prefix: '/huespedes' });
+server.register(tarjetaRegistroRoutes, { prefix: '/tarjeta-registro' });
 
 // Error handler
 server.setErrorHandler(errorHandler);

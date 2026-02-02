@@ -65,48 +65,52 @@ export class TarjetaRegistroRepository {
    * @returns La tarjeta de registro actualizada.
    */
   async updateEstadoTarjeta(
-    id: number,
-    estado: EstadoTarjeta,
-    extra?: {
-      respuesta_tra?: unknown;
-      ultimo_error?: string;
-      intentos?: number;
-    }
-  ) {
-    const fields: string[] = [];
-    const values: any[] = [];
-    let idx = 1;
-
-    fields.push(`estado = $${idx++}`);
-    values.push(estado);
-
-    if (extra?.respuesta_tra !== undefined) {
-      fields.push(`respuesta_tra = $${idx++}`);
-      values.push(JSON.stringify(extra.respuesta_tra));
-    }
-
-    if (extra?.ultimo_error !== undefined) {
-      fields.push(`ultimo_error = $${idx++}`);
-      values.push(extra.ultimo_error);
-    }
-
-    if (extra?.intentos !== undefined) {
-      fields.push(`intentos = $${idx++}`);
-      values.push(extra.intentos);
-    }
-
-    values.push(id);
-
-    const query = `
-      UPDATE tra_registros
-      SET ${fields.join(', ')}, updated_at = NOW()
-      WHERE id = $${idx}
-      RETURNING *
-    `;
-
-    const { rows } = await dbClient.query(query, values);
-    return rows[0];
+  idReserva: number,
+  estado: EstadoTarjeta,
+  extra?: {
+    respuesta_tra?: any;
+    ultimo_error?: string | null;
+    intentos?: number;
+    updated_at?: string;
   }
+) {
+  const fields: string[] = [];
+  const values: any[] = [];
+  let idx = 1;
+
+  fields.push(`estado = $${idx++}`);
+  values.push(estado);
+
+  if (extra?.respuesta_tra !== undefined) {
+    fields.push(`respuesta_tra = $${idx++}`);
+    values.push(extra.respuesta_tra); 
+  }
+
+  if (extra?.ultimo_error !== undefined) {
+    fields.push(`ultimo_error = $${idx++}`);
+    values.push(extra.ultimo_error);
+  }
+
+  if (extra?.intentos !== undefined) {
+    fields.push(`intentos = $${idx++}`);
+    values.push(extra.intentos);
+  }
+
+  fields.push(`updated_at = $${idx++}`);
+  values.push(extra?.updated_at || new Date().toISOString());
+
+  values.push(idReserva);
+
+  const query = `
+    UPDATE tra_registros
+    SET ${fields.join(', ')}
+    WHERE id_reserva = $${idx}
+    RETURNING *
+  `;
+
+  const { rows } = await dbClient.query(query, values);
+  return rows[0];
+}
 
 
   /**

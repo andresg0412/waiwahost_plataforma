@@ -6,6 +6,7 @@ import CreateReservaButton from './CreateReservaButton';
 import ReservaDetailModal from './ReservaDetailModal';
 import HuespedesListModal from './HuespedesListModal';
 import PagosModal from './PagosModal';
+import TarjetaModal from './TarjetaModal';
 import SuccessModal from './SuccessModal';
 import ConfirmModal from './ConfirmModal';
 import MonthSelector from './MonthSelector';
@@ -50,6 +51,8 @@ const Bookings: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [selectedMonth, setSelectedMonth] = useState<number>(-1);
   const [tarjetas, setTarjetas] = useState<IEstadoTarjetaResponse[]>([]);
+  const [reservaToViewTarjeta, setReservaToViewTarjeta] = useState<IReservaTableData | null>(null);
+  const [tarjetaModalOpen, setTarjetaModalOpen] = useState(false);
 
   const { user } = useAuth();
   const canCreate = user?.permisos?.includes('crear_reservas') || true; // TEMPORAL: siempre true para debugging
@@ -170,27 +173,74 @@ const Bookings: React.FC = () => {
     setPagosModalOpen(true);
   };
 
+  const handleViewTarjeta = (reserva: IReservaTableData) => {
+    setReservaToViewTarjeta(reserva);
+    setTarjetaModalOpen(true);
+  };
+
 
 
   useEffect(() => {
   const cargarEstados = async () => {
-    if (filteredReservas.length === 0) return;
+      if (filteredReservas.length === 0) return;
+
+      try {
+        // Obtenemos los estados de todas las reservas filtradas
+        const promesas = filteredReservas.map(res => getEstadoTarjetaApi(res.id));
+        const resultados = await Promise.all(promesas);
+
+        // Aplanamos el array de arrays en uno solo
+        const todasLasTarjetas = resultados.flat();
+        setTarjetas(todasLasTarjetas);
+      } catch (err) {
+        console.error("Error cargando tarjetas", err);
+      }
+    };
+
+    cargarEstados();
+  }, [filteredReservas]);
+
+
+
+  const handleTarjetaSubmit = async (tarjetaData: any) => {
+    if (!reservaToViewTarjeta) return;
 
     try {
-      // Obtenemos los estados de todas las reservas filtradas
-      const promesas = filteredReservas.map(res => getEstadoTarjetaApi(res.id));
-      const resultados = await Promise.all(promesas);
-      
-      // Aplanamos el array de arrays en uno solo
-      const todasLasTarjetas = resultados.flat();
-      setTarjetas(todasLasTarjetas);
-    } catch (err) {
-      console.error("Error cargando tarjetas", err);
+      const body: any = {
+        ...tarjetaData,
+        id: reservaToViewTarjeta.id,
+        codigo_reserva: reservaToViewTarjeta.codigo_reserva,
+        fecha_creacion: reservaToViewTarjeta.fecha_creacion,
+        fecha_vencimiento: tarjetaData.fecha_vencimiento,
+        numero_tarjeta: tarjetaData.numero_tarjeta,
+        cvv: tarjetaData.cvv,
+        nombre_titular: tarjetaData.nombre_titular,
+        tipo_tarjeta: tarjetaData.tipo_tarjeta
+      };
+      const updatedTarjeta = await getEstadoTarjetaApi(body);
+
+      setTarjetas((prevTarjetas) =>
+        prevTarjetas.map((tarjeta) =>
+          tarjeta.id === updatedTarjeta.id ? updatedTarjeta : tarjeta
+        )
+      );
+
+      setSuccessMsg('Tarjeta actualizada exitosamente');
+      setSuccessOpen(true);
+      setTarjetaModalOpen(false);
+      setReservaToViewTarjeta(null);
+    } catch (error) {
+      console.error('Error editando tarjeta:', error);
+      alert(error instanceof Error ? error.message : 'Error al actualizar tarjeta');
     }
   };
 
-  cargarEstados();
-}, [filteredReservas]);
+  const handleTarjetaClose = () => {
+    setTarjetaModalOpen(false);
+    setReservaToViewTarjeta(null);
+  };
+
+
 
   return (
     <div className="p-4 space-y-6">
@@ -225,6 +275,7 @@ const Bookings: React.FC = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           onViewDetail={handleViewDetail}
+          onViewTarjeta={handleViewTarjeta}
           onViewHuespedes={handleViewHuespedes}
           onViewPagos={handleViewPagos}
           canEdit={canEdit}
@@ -309,6 +360,13 @@ const Bookings: React.FC = () => {
             actualizarTotalesReserva(reservaToViewPagos.id);
           }
         }}
+      />
+
+      <TarjetaModal
+        open={tarjetaModalOpen}
+        onClose={handleTarjetaClose}
+        reserva={reservaToViewTarjeta}
+        onSubmit={handleTarjetaSubmit}
       />
 
       <ConfirmModal

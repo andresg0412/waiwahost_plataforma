@@ -1,17 +1,17 @@
 export interface IPayloadTarjeta {
-	costo: string,
-	motivo: string,
-	nombres: string,
-	check_in: string,
-	apellidos: string,
-	check_out: string,
+	costo: string, f
+	motivo: string, f
+	nombres: string, f
+	check_in: string, f
+	apellidos: string, f
+	check_out: string, f
 	tipo_acomodacion: string,
 	cuidad_residencia: string,
 	numero_habitacion: string,
 	cuidad_procedencia: string,
 	numero_acompanantes: number,
 	rnt_establecimiento: number,
-	tipo_identificacion: string,
+	tipo_identificacion: string, f
 	numero_identificacion: number,
 	nombre_establecimiento: string
 }

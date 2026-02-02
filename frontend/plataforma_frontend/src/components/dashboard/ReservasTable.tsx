@@ -18,6 +18,7 @@ interface ReservasTableProps {
 
 const ReservasTable: React.FC<ReservasTableProps> = ({
   reservas,
+  tarjetas,
   onEdit,
   onDelete,
   onViewDetail,
@@ -125,6 +126,9 @@ const ReservasTable: React.FC<ReservasTableProps> = ({
               Estado
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              TRA
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Acciones
             </th>
           </tr>
@@ -222,6 +226,11 @@ const ReservasTable: React.FC<ReservasTableProps> = ({
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <PlataformaBadge plataforma={reserva.plataforma_origen} />
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <span className={getEstadoBadge(reserva.estado)}>
+                    {reserva.estado.replace('_', ' ')}
+                  </span>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <span className={getEstadoBadge(reserva.estado)}>

@@ -131,6 +131,24 @@ export class TarjetaRegistroRepository {
   }
 
   /**
+   * Busca el estado de la tarjeta de registro por ID de reserva.
+   * @param id_reserva - ID de la reserva.
+   * @returns Un array de tarjetas de registro.
+   */
+  async findByReservaEstado(idReserva: number) {
+    const query = `
+      SELECT id, id_reserva, id_inmueble, estado, intentos, fecha, updated_at
+      FROM tra_registros
+      WHERE id_reserva = $1
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+
+    const { rows } = await dbClient.query(query, [idReserva]);
+    return rows;
+  }
+
+  /**
    * Busca las tarjetas de registro pendientes.
    * @param limit - Límite de resultados.
    * @returns Un array de tarjetas de registro.

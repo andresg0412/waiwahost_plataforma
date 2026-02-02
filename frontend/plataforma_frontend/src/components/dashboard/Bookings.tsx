@@ -196,6 +196,7 @@ const Bookings: React.FC = () => {
         </div>
       ) : (
         <ReservasTable
+          tarjetas={tarjetas}
           reservas={filteredReservas}
           onEdit={handleEdit}
           onDelete={handleDelete}

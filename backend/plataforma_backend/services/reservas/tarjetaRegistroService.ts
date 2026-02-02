@@ -96,14 +96,25 @@ export class TarjetaRegistroService {
     }
   }
 
-
   /**
-   * Busca las tarjetas de registro por ID de reserva.
+   * Busca ella tarjeta de registro por ID de reserva.
    * @param id_reserva - ID de la reserva.
    * @returns Un array de tarjetas de registro.
    */
   async findByReserva(idReserva: number) {
     const tarjeta = await this.tarjetaRepo.findByReserva(idReserva);
+    if (!tarjeta) throw new Error('Tarjeta no encontrada');
+    return tarjeta;
+  }
+
+
+  /**
+   * Busca el estado de la tarjeta de registro por ID de reserva.
+   * @param id_reserva - ID de la reserva.
+   * @returns Un array de tarjetas de registro.
+   */
+  async findByReservaEstado(idReserva: number) {
+    const tarjeta = await this.tarjetaRepo.findByReservaEstado(idReserva);
     if (!tarjeta) throw new Error('Tarjeta no encontrada');
     return tarjeta;
   }

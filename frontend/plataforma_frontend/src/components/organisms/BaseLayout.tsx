@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { PanelRightClose, PanelRightOpen } from "lucide-react"
 
@@ -46,6 +46,12 @@ const BaseLayout: React.FC = () => {
       setOpen(false);
     }
   };
+
+  useEffect(() => {
+  const isDesktop = window.innerWidth >= 768;
+  setOpen(isDesktop);
+}, []);
+
 
 
 

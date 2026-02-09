@@ -68,13 +68,6 @@ const Bookings: React.FC = () => {
   const canEdit = user?.permisos?.includes('editar_reservas') || true; // TEMPORAL: siempre true para debugging
   const canDelete = user?.permisos?.includes('eliminar_reservas') || true; // TEMPORAL: siempre true para debugging
 
-  console.log('=== RESERVAS DEBUG ===');
-  console.log('user:', user);
-  console.log('user permisos:', user?.permisos);
-  console.log('canCreate:', canCreate);
-  console.log('canEdit:', canEdit);
-  console.log('canDelete:', canDelete);
-  console.log('========================');
 
   // const filteredReservas = useMemo(() => {
   //   if (selectedMonth === -1 && selectedInmueble === -1) {
@@ -335,14 +328,12 @@ const Bookings: React.FC = () => {
         onPagoCreated={(pago: IPago) => {
           // Actualizar automáticamente los totales de la reserva
           if (reservaToViewPagos) {
-            console.log('✅ Pago creado, actualizando totales de reserva:', reservaToViewPagos.codigo_reserva);
             actualizarTotalesReserva(reservaToViewPagos.id);
           }
         }}
         onPagoDeleted={(pagoId: number) => {
           // Actualizar automáticamente los totales de la reserva
           if (reservaToViewPagos) {
-            console.log('✅ Pago eliminado, actualizando totales de reserva:', reservaToViewPagos.codigo_reserva);
             actualizarTotalesReserva(reservaToViewPagos.id);
           }
         }}

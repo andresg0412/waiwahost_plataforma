@@ -3,7 +3,7 @@ import pool from '../libs/db';
 
 export class EmpresaRepository {
   async getEmpresas(id_empresa?: number) {
-    let query = `SELECT id_empresa, nombre
+    let query = `SELECT id_empresa, nombre, nit
       FROM empresas
       WHERE estado = 'activa'`;
 
@@ -18,6 +18,36 @@ export class EmpresaRepository {
       return { data: rows, error: null };
     } catch (error: any) {
       console.error('Error al obtener empresas:', error);
+      return { data: null, error };
+    }
+  }
+
+  async getByNit(nit: string) {
+    const query = `SELECT id_empresa, nombre, nit FROM empresas WHERE nit = $1`;
+    try {
+      const { rows } = await pool.query(query, [nit]);
+      return { data: rows[0], error: null };
+    } catch (error: any) {
+      console.error('Error al buscar empresa por NIT:', error);
+      return { data: null, error };
+    }
+  }
+
+  async createEmpresa(empresa: any) {
+    const { nombre, nit, plan_actual } = empresa;
+
+    const query = `
+      INSERT INTO empresas (nombre, nit, plan_actual)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `;
+    const params = [nombre, nit, plan_actual];
+
+    try {
+      const { rows } = await pool.query(query, params);
+      return { data: rows[0], error: null };
+    } catch (error: any) {
+      console.error('Error al crear empresa:', error);
       return { data: null, error };
     }
   }

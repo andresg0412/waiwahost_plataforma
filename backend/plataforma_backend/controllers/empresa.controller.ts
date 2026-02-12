@@ -2,6 +2,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { successResponse, errorResponse } from '../libs/responseHelper';
 import { getEmpresas } from '../services/empresas/getEmpresasService';
+import { EmpresaSchema } from '../schemas/empresa.schema';
+import { createEmpresaService } from '../services/empresas/createEmpresaService';
 
 
 export const empresaController = {
@@ -30,5 +32,39 @@ export const empresaController = {
       return reply.status(403).send(errorResponse({ message: error.message, code: 403, error: 'Forbidden' }));
     }
     return reply.send(successResponse(data));
+  },
+
+  // Crear empresa (solo SUPERADMIN)
+  create: async (req: FastifyRequest, reply: FastifyReply) => {
+    // 1. Verificar autenticación
+    const ctx = req.userContext;
+    if (!ctx || !ctx.id) {
+      return reply.status(401).send(errorResponse({ message: 'No autenticado', code: 401 }));
+    }
+
+    // 2. Verificar autorización (Solo SUPERADMIN)
+    if (ctx.id_roles !== 1) { // 1 = ROLES.SUPERADMIN
+      return reply.status(403).send(errorResponse({ message: 'No autorizado. Se requiere rol de SUPERADMIN.', code: 403 }));
+    }
+
+    // 3. Validar datos de entrada
+    const parse = EmpresaSchema.safeParse(req.body);
+    if (!parse.success) {
+      return reply.status(400).send(errorResponse({ message: 'Datos inválidos', code: 400, error: parse.error }));
+    }
+
+    // 4. Llamar al servicio de creación
+    const { data, error } = await createEmpresaService(parse.data);
+
+    if (error) {
+      console.error('Error al crear empresa:', error);
+      return reply.status(error.status || 500).send(errorResponse({
+        message: error.message,
+        code: error.status || 500,
+        error: error.details
+      }));
+    }
+
+    return reply.status(201).send(successResponse(data, 201));
   },
 };

@@ -19,6 +19,10 @@ export const EmpresaUpdateSchema = z.object({
     estado: z.enum(['activa', 'inactiva']).optional(),
 });
 
+export const EmpresaParamsSchema = z.object({
+    id: z.coerce.number().positive('El ID debe ser un número positivo'),
+});
 
 export type EmpresaUpdateInput = z.infer<typeof EmpresaUpdateSchema>;
 export type EmpresaInput = z.infer<typeof EmpresaSchema>;
+export type EmpresaParams = z.infer<typeof EmpresaParamsSchema>;

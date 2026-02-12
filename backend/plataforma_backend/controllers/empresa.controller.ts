@@ -2,10 +2,12 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { successResponse, errorResponse } from '../libs/responseHelper';
 import { getEmpresas } from '../services/empresas/getEmpresasService';
-import { EmpresaSchema } from '../schemas/empresa.schema';
+import { EmpresaSchema, EmpresaParamsSchema } from '../schemas/empresa.schema';
 import { createEmpresaService } from '../services/empresas/createEmpresaService';
 import { EmpresaUpdateSchema } from '../schemas/empresa.schema';
 import { editEmpresaService } from '../services/empresas/editEmpresaService';
+import { softDeleteEmpresaService } from '../services/empresas/softDeleteEmpresaService';
+import { hardDeleteEmpresaService } from '../services/empresas/hardDeleteEmpresaService';
 
 
 export const empresaController = {
@@ -96,6 +98,62 @@ export const empresaController = {
 
     if (error) {
       console.error('Error al editar empresa:', error);
+      return reply.status(error.status || 500).send(errorResponse({
+        message: error.message,
+        code: error.status || 500,
+        error: error.details
+      }));
+    }
+
+    return reply.send(successResponse(data));
+  },
+
+  delete: async (req: FastifyRequest, reply: FastifyReply) => {
+    // Soft Delete: Inactiva empresa y usuarios
+    const ctx = req.userContext;
+    if (!ctx || !ctx.id || ctx.id_roles !== 1) { // Solo SUPERADMIN
+      return reply.status(403).send(errorResponse({ message: 'No autorizado', code: 403 }));
+    }
+
+    const parseParams = EmpresaParamsSchema.safeParse(req.params);
+    if (!parseParams.success) {
+      return reply.status(400).send(errorResponse({ message: 'ID inválido', code: 400, error: parseParams.error }));
+    }
+
+    const { id } = parseParams.data;
+
+    const { data, error } = await softDeleteEmpresaService(id);
+
+    if (error) {
+      console.error('Error al desactivar empresa:', error);
+      return reply.status(error.status || 500).send(errorResponse({
+        message: error.message,
+        code: error.status || 500,
+        error: error.details
+      }));
+    }
+
+    return reply.send(successResponse(data));
+  },
+
+  deletePermanent: async (req: FastifyRequest, reply: FastifyReply) => {
+    // Hard Delete: Elimina TODO
+    const ctx = req.userContext;
+    if (!ctx || !ctx.id || ctx.id_roles !== 1) { // Solo SUPERADMIN
+      return reply.status(403).send(errorResponse({ message: 'No autorizado', code: 403 }));
+    }
+
+    const parseParams = EmpresaParamsSchema.safeParse(req.params);
+    if (!parseParams.success) {
+      return reply.status(400).send(errorResponse({ message: 'ID inválido', code: 400, error: parseParams.error }));
+    }
+
+    const { id } = parseParams.data;
+
+    const { data, error } = await hardDeleteEmpresaService(id);
+
+    if (error) {
+      console.error('Error al eliminar empresa permanentemente:', error);
       return reply.status(error.status || 500).send(errorResponse({
         message: error.message,
         code: error.status || 500,

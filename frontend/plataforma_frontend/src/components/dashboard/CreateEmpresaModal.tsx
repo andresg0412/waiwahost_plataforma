@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../atoms/Button';
-import { IEmpresa } from '../../interfaces/Empresa'; // Ensure this path is correct based on folder structure
+import { IEmpresa } from '../../interfaces/Empresa';
 
 interface CreateEmpresaModalProps {
     open: boolean;
@@ -24,11 +24,14 @@ const CreateEmpresaModal: React.FC<CreateEmpresaModalProps> = ({ open, onClose, 
         if (open) {
             if (initialData && isEdit) {
                 setFormData({
-                    ...initialData,
-                    password: '', // Don't show password on edit
+                    nombre: initialData.nombre ?? '',
+                    nit: initialData.nit ?? '',
+                    plan_actual: initialData.plan_actual ?? 'premium',
+                    username: initialData.username ?? '',
+                    email: initialData.email ?? '',
+                    password: '',
                 });
             } else {
-                // Reset form for create
                 setFormData({
                     nombre: '',
                     nit: '',
@@ -69,8 +72,9 @@ const CreateEmpresaModal: React.FC<CreateEmpresaModalProps> = ({ open, onClose, 
                                 <input
                                     type="text"
                                     name="nombre"
-                                    value={formData.nombre}
+                                    value={formData.nombre || ''}
                                     onChange={handleChange}
+                                    placeholder='Nombre de la empresa'
                                     className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-tourism-teal outline-none"
                                     required
                                 />
@@ -83,6 +87,7 @@ const CreateEmpresaModal: React.FC<CreateEmpresaModalProps> = ({ open, onClose, 
                                     name="nit"
                                     value={formData.nit}
                                     onChange={handleChange}
+                                    placeholder='NIT de la empresa'
                                     className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-tourism-teal outline-none"
                                     required
                                 />
@@ -90,7 +95,6 @@ const CreateEmpresaModal: React.FC<CreateEmpresaModalProps> = ({ open, onClose, 
                         </div>
                     </div>
 
-                    {/* Admin User Section (Create Only or Edit Optional) */}
                     <div className="border-b pb-4 mb-4">
                         <h3 className="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wide">
                             {isEdit ? 'Actualizar Administrador (Opcional)' : 'Usuario Administrador'}
@@ -105,8 +109,8 @@ const CreateEmpresaModal: React.FC<CreateEmpresaModalProps> = ({ open, onClose, 
                                     value={formData.username}
                                     onChange={handleChange}
                                     className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-tourism-teal outline-none"
-                                    required={!isEdit} // Required only on creation
-                                    placeholder={isEdit ? 'Dejar vacío si no cambia' : ''}
+                                    required={!isEdit}
+                                    placeholder='Nombre de usuario'
                                 />
                             </div>
 
@@ -120,6 +124,7 @@ const CreateEmpresaModal: React.FC<CreateEmpresaModalProps> = ({ open, onClose, 
                                         onChange={handleChange}
                                         className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-tourism-teal outline-none"
                                         required={!isEdit}
+                                        placeholder='Email del administrador'
                                     />
                                 </div>
                             )}
@@ -132,8 +137,8 @@ const CreateEmpresaModal: React.FC<CreateEmpresaModalProps> = ({ open, onClose, 
                                     value={formData.password}
                                     onChange={handleChange}
                                     className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-tourism-teal outline-none"
-                                    required={!isEdit} // Required only on creation
-                                    placeholder={isEdit ? 'Dejar vacío si no cambia' : ''}
+                                    required={!isEdit}
+                                    placeholder={isEdit ? 'Ingrese nueva contraseña' : 'Contraseña del administrador'}
                                     minLength={6}
                                 />
                             </div>

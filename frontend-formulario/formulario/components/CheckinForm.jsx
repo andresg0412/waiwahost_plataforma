@@ -27,6 +27,9 @@ const CheckinFormContent = () => {
                 documento_tipo: 'cedula',
                 documento_numero: '',
                 fecha_nacimiento: '',
+                ciudad_residencia: '',
+                ciudad_procedencia: '',
+                motivo_viaje: 'Vacaciones',
                 es_principal: true,
             }
         ],
@@ -51,6 +54,9 @@ const CheckinFormContent = () => {
     const [submitted, setSubmitted] = useState(false);
     const [submitError, setSubmitError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [paises, setPaises] = useState([]);
+    const [ciudadesByPais, setCiudadesByPais] = useState({});
+    const [loadingPaises, setLoadingPaises] = useState(false);
 
     useEffect(() => {
         if (reservaIdParam) {
@@ -65,7 +71,40 @@ const CheckinFormContent = () => {
         } else {
             fetchInmueblesList();
         }
+        fetchPaises();
     }, [inmuebleIdParam, reservaIdParam]);
+
+    const fetchPaises = async () => {
+        try {
+            setLoadingPaises(true);
+            const res = await fetch('/checkin/api/paises');
+            if (res.ok) {
+                const data = await res.json();
+                if (!data.isError) {
+                    setPaises(data.data);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching paises:", error);
+        } finally {
+            setLoadingPaises(false);
+        }
+    };
+
+    const fetchCiudades = async (paisId) => {
+        if (!paisId || ciudadesByPais[paisId]) return;
+        try {
+            const res = await fetch(`/checkin/api/ciudades/pais/${paisId}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (!data.isError) {
+                    setCiudadesByPais(prev => ({ ...prev, [paisId]: data.data }));
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching ciudades:", error);
+        }
+    };
 
     const fetchInmueblesList = async () => {
         try {
@@ -190,6 +229,20 @@ const CheckinFormContent = () => {
             )
         }));
 
+        // Si el campo es un país, cargar sus ciudades
+        if (field === 'pais_residencia' || field === 'pais_procedencia') {
+            fetchCiudades(value);
+
+            // Limpiar ciudad si cambia el país
+            const cityField = field === 'pais_residencia' ? 'ciudad_residencia' : 'ciudad_procedencia';
+            setFormData(prev => ({
+                ...prev,
+                huespedes: prev.huespedes.map((huesped, i) =>
+                    i === index ? { ...huesped, [cityField]: '' } : huesped
+                )
+            }));
+        }
+
         if (errors.huespedes) {
             setErrors(prev => ({ ...prev, huespedes: undefined }));
         }
@@ -210,6 +263,8 @@ const CheckinFormContent = () => {
                     documento_numero: '',
                     fecha_nacimiento: '',
                     es_principal: false,
+                    ciudad_residencia: '',
+                    ciudad_procedencia: ''
                 });
             }
             currentHuespedes.push(...nuevosHuespedes);
@@ -550,7 +605,7 @@ const CheckinFormContent = () => {
                                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal"
                                                         />
                                                     </div>
-                                                     <div>
+                                                    <div>
                                                         <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de Viaje *</label>
                                                         <select
                                                             value={huesped.motivo_viaje}
@@ -566,6 +621,60 @@ const CheckinFormContent = () => {
                                                             <option value="Compras">Compras</option>
                                                             <option value="Transito">Transito</option>
                                                             <option value="Otros">Otros</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">País de Residencia *</label>
+                                                        <select
+                                                            value={huesped.pais_residencia}
+                                                            onChange={(e) => handleHuespedChange(index, 'pais_residencia', e.target.value)}
+                                                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal'
+                                                        >
+                                                            <option value="">Selecciona un país</option>
+                                                            {paises.map(p => (
+                                                                <option key={p.id_pais} value={p.id_pais}>{p.nombre}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad de Residencia *</label>
+                                                        <select
+                                                            value={huesped.ciudad_residencia}
+                                                            onChange={(e) => handleHuespedChange(index, 'ciudad_residencia', e.target.value)}
+                                                            disabled={!huesped.pais_residencia}
+                                                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal'
+                                                        >
+                                                            <option value="">Selecciona una ciudad</option>
+                                                            {(ciudadesByPais[huesped.pais_residencia] || []).map(c => (
+                                                                <option key={c.id_ciudad} value={c.nombre}>{c.nombre}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">País de Procedencia *</label>
+                                                        <select
+                                                            value={huesped.pais_procedencia}
+                                                            onChange={(e) => handleHuespedChange(index, 'pais_procedencia', e.target.value)}
+                                                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal'
+                                                        >
+                                                            <option value="">Selecciona un país</option>
+                                                            {paises.map(p => (
+                                                                <option key={p.id_pais} value={p.id_pais}>{p.nombre}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad de Procedencia *</label>
+                                                        <select
+                                                            value={huesped.ciudad_procedencia}
+                                                            onChange={(e) => handleHuespedChange(index, 'ciudad_procedencia', e.target.value)}
+                                                            disabled={!huesped.pais_procedencia}
+                                                            className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal'
+                                                        >
+                                                            <option value="">Selecciona una ciudad</option>
+                                                            {(ciudadesByPais[huesped.pais_procedencia] || []).map(c => (
+                                                                <option key={c.id_ciudad} value={c.nombre}>{c.nombre}</option>
+                                                            ))}
                                                         </select>
                                                     </div>
                                                 </div>

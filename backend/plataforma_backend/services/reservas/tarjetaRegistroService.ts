@@ -21,32 +21,22 @@ export class TarjetaRegistroService {
    */
   async crearDesdeReserva(reservaId: number) {
     try {
-      const tarjetas = await this.tarjetaRepo.findByReserva(reservaId)
-      if (tarjetas && tarjetas.length > 0) {
-        console.log(`La tarjeta para la reserva ${reservaId} ya existe. No se creará.`);
-        return;
-      }
-
-
+      // 1. Obtener datos necesarios
       const reserva = await this.reservasRepo.getReservaById(reservaId);
       if (!reserva) throw new Error('Reserva no encontrada');
 
       const huespedes = await this.reservasRepo.getHuespedesByReservaId(reservaId);
       const principal = huespedes.find((h: any) => h.es_principal);
-      if (!principal) throw new Error('No hay huésped principal');
+      if (!principal) throw new Error('No hay huésped principal para crear la tarjeta');
 
       const responseInmueble = await this.inmueblesRepo.getInmuebleById(reserva.id_inmueble);
       const inmueble = responseInmueble.data;
-
       if (!inmueble) throw new Error('Inmueble no encontrado o inactivo');
 
-
-
+      // 2. Preparar el payload (con los mapeos ciudad -> cuidad y costo -> string)
       const formatDate = (date: any): string => {
         if (!date) return '';
-        if (date instanceof Date) {
-          return date.toISOString().split('T')[0];
-        }
+        if (date instanceof Date) return date.toISOString().split('T')[0];
         return String(date).split('T')[0];
       };
 
@@ -58,23 +48,40 @@ export class TarjetaRegistroService {
         cuidad_residencia: principal.ciudad_residencia || '',
         cuidad_procedencia: principal.ciudad_procedencia || '',
         motivo: principal.motivo || 'Otros',
-        numero_acompanantes: Number(reserva.numero_huespedes - 1) || 0,
-
+        numero_acompanantes: Math.max(0, Number(reserva.numero_huespedes - 1)) || 0,
         numero_habitacion: inmueble.especificacion_acomodacion || '',
         tipo_acomodacion: inmueble.tipo_acomodacion || 'Otro',
         nombre_establecimiento: inmueble.nombre || '',
         rnt_establecimiento: Number(inmueble.rnt) || 0,
-
         costo: String(reserva.total_reserva || 0),
-
         check_in: formatDate(reserva.fecha_inicio),
-
         check_out: formatDate(reserva.fecha_fin),
       };
 
-
+      // Validar payload
       const validatedPayload = PayloadTarjetaAlojamientoSchema.parse(payload);
 
+      // 3. Verificar si ya existe una tarjeta
+      const tarjetas = await this.tarjetaRepo.findByReserva(reservaId);
+      const tarjetaExistente = tarjetas && tarjetas.length > 0 ? tarjetas[0] : null;
+
+      if (tarjetaExistente) {
+        // SI EXISTE: Evaluar si permite actualización (solo si no ha sido finalizada/enviada)
+        if (['pendiente', 'error', 'reintento'].includes(tarjetaExistente.estado)) {
+          console.log(`Sincronizando tarjeta existente para reserva ${reservaId}. Estado actual: ${tarjetaExistente.estado}`);
+          await this.tarjetaRepo.updateTarjeta(reservaId, {
+            payload: validatedPayload,
+            id_huesped: principal.id,
+            updated_at: new Date().toISOString()
+          });
+          return;
+        } else {
+          console.log(`La tarjeta para la reserva ${reservaId} ya está en estado ${tarjetaExistente.estado}. No se actualizará.`);
+          return;
+        }
+      }
+
+      // 4. SI NO EXISTE: Crear nueva tarjeta
       const createTarjetaInput = CreateTarjetaAlojamientoSchema.parse({
         id_reserva: reservaId,
         id_huesped: principal.id,
@@ -90,7 +97,8 @@ export class TarjetaRegistroService {
       });
 
       await this.tarjetaRepo.createTarjetaRegistro(createTarjetaInput);
-    } catch (error) {
+      console.log(`Nueva tarjeta de registro creada para reserva ${reservaId}`);
+    } catch (error: any) {
       console.error("DETALLE ERROR ZOD:", error);
       throw new Error('Error al validar datos para la tarjeta: ' + error.message);
     }

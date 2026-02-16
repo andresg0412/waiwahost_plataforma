@@ -53,22 +53,20 @@ export async function editReservaService(id: number, data: EditReservaRequest) {
   }
 
 
-  // Si el estado de la reserva es "confirmada", crear tarjeta de registro
+  // Si el estado de la reserva es "confirmada", crear o sincronizar tarjeta de registro
   try {
-  const pasoAConfirmado = 
-    reservaOriginal.estado !== 'confirmada' && 
-    fieldsToUpdate.estado === 'confirmada';
+    const esConfirmada = updated.estado === 'confirmada';
 
-  if (pasoAConfirmado) {
-    console.log("El estado cambió a confirmada. Se creará la tarjeta de registro.");
-    const { TarjetaRegistroService } = await import('./tarjetaRegistroService');
-    const tarjetaRegistroService = new TarjetaRegistroService();
-    
-    await tarjetaRegistroService.crearDesdeReserva(id);
+    if (esConfirmada) {
+      console.log(`Verificando/Sincronizando tarjeta para reserva ${id}. Estado: ${updated.estado}`);
+      const { TarjetaRegistroService } = await import('./tarjetaRegistroService');
+      const tarjetaRegistroService = new TarjetaRegistroService();
+
+      await tarjetaRegistroService.crearDesdeReserva(id);
+    }
+  } catch (error) {
+    console.error('Error al procesar tarjeta de registro:', error);
   }
-} catch (error) {
-  console.error('Error al crear tarjeta de registro:', error);
-}
 
   return updated;
 }

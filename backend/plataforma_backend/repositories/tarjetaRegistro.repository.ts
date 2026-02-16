@@ -65,52 +65,77 @@ export class TarjetaRegistroRepository {
    * @returns La tarjeta de registro actualizada.
    */
   async updateEstadoTarjeta(
-  idReserva: number,
-  estado: EstadoTarjeta,
-  extra?: {
-    respuesta_tra?: any;
-    ultimo_error?: string | null;
-    intentos?: number;
-    updated_at?: string;
+    idReserva: number,
+    estado: EstadoTarjeta,
+    extra?: {
+      respuesta_tra?: any;
+      ultimo_error?: string | null;
+      intentos?: number;
+      updated_at?: string;
+    }
+  ) {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    fields.push(`estado = $${idx++}`);
+    values.push(estado);
+
+    if (extra?.respuesta_tra !== undefined) {
+      fields.push(`respuesta_tra = $${idx++}`);
+      values.push(extra.respuesta_tra);
+    }
+
+    if (extra?.ultimo_error !== undefined) {
+      fields.push(`ultimo_error = $${idx++}`);
+      values.push(extra.ultimo_error);
+    }
+
+    if (extra?.intentos !== undefined) {
+      fields.push(`intentos = $${idx++}`);
+      values.push(extra.intentos);
+    }
+
+    fields.push(`updated_at = $${idx++}`);
+    values.push(extra?.updated_at || new Date().toISOString());
+
+    values.push(idReserva);
+
+    const query = `
+      UPDATE tra_registros
+      SET ${fields.join(', ')}
+      WHERE id_reserva = $${idx}
+      RETURNING *
+    `;
+
+    const { rows } = await dbClient.query(query, values);
+    return rows[0];
   }
-) {
-  const fields: string[] = [];
-  const values: any[] = [];
-  let idx = 1;
 
-  fields.push(`estado = $${idx++}`);
-  values.push(estado);
+  /**
+   * Actualiza los datos de una tarjeta de registro existente.
+   */
+  async updateTarjeta(idReserva: number, data: {
+    payload: any;
+    id_huesped: number;
+    updated_at: string;
+  }) {
+    const query = `
+      UPDATE tra_registros
+      SET payload = $1, id_huesped = $2, updated_at = $3
+      WHERE id_reserva = $4
+      RETURNING *
+    `;
+    const values = [
+      JSON.stringify(data.payload),
+      data.id_huesped,
+      data.updated_at,
+      idReserva
+    ];
 
-  if (extra?.respuesta_tra !== undefined) {
-    fields.push(`respuesta_tra = $${idx++}`);
-    values.push(extra.respuesta_tra); 
+    const { rows } = await dbClient.query(query, values);
+    return rows[0];
   }
-
-  if (extra?.ultimo_error !== undefined) {
-    fields.push(`ultimo_error = $${idx++}`);
-    values.push(extra.ultimo_error);
-  }
-
-  if (extra?.intentos !== undefined) {
-    fields.push(`intentos = $${idx++}`);
-    values.push(extra.intentos);
-  }
-
-  fields.push(`updated_at = $${idx++}`);
-  values.push(extra?.updated_at || new Date().toISOString());
-
-  values.push(idReserva);
-
-  const query = `
-    UPDATE tra_registros
-    SET ${fields.join(', ')}
-    WHERE id_reserva = $${idx}
-    RETURNING *
-  `;
-
-  const { rows } = await dbClient.query(query, values);
-  return rows[0];
-}
 
 
   /**
@@ -165,4 +190,18 @@ export class TarjetaRegistroRepository {
     const { rows } = await dbClient.query(query, [limit]);
     return rows;
   }
+  /**
+   * Busca las tarjetas de registro por ID de huesped.
+   */
+  async findByHuesped(id_huesped: number) {
+    const query = `
+      SELECT *
+      FROM tra_registros
+      WHERE id_huesped = $1
+      ORDER BY created_at DESC
+    `;
+    const { rows } = await dbClient.query(query, [id_huesped]);
+    return rows;
+  }
+
 }

@@ -181,7 +181,7 @@ const Bookings: React.FC = () => {
 
 
   useEffect(() => {
-  const cargarEstados = async () => {
+    const cargarEstados = async () => {
       if (filteredReservas.length === 0) return;
 
       try {
@@ -294,6 +294,9 @@ const Bookings: React.FC = () => {
             documento_numero: huesped.documento_numero,
             fecha_nacimiento: huesped.fecha_nacimiento,
             es_principal: huesped.es_principal,
+            motivo: huesped.motivo,
+            ciudad_residencia: huesped.ciudad_residencia,
+            ciudad_procedencia: huesped.ciudad_procedencia,
           })),
           precio_total: reservaToEdit.precio_total,
           total_reserva: reservaToEdit.total_reserva,

@@ -13,6 +13,7 @@ import { deleteMovimientoService } from '../services/movimientos/deleteMovimient
 import { getInmueblesSelectorsService } from '../services/movimientos/getInmueblesSelectorsService';
 import { filtrarMovimientosPorPlataformaService } from '../services/movimientos/filtrarMovimientosPorPlataformaService';
 import { reportePorPlataformaService } from '../services/movimientos/reportePorPlataformaService';
+import { ExportMovimientosExcelService } from '../services/movimientos/exportMovimientosExcelService';
 
 // Importar schemas
 import {
@@ -22,7 +23,8 @@ import {
   MovimientosInmuebleQuerySchema,
   MovimientoIdParamSchema,
   FechaParamSchema,
-  InmueblesSelectorrQuerySchema
+  InmueblesSelectorrQuerySchema,
+  ExportMovimientosQuerySchema
 } from '../schemas/movimiento.schema';
 
 export const movimientosController = {
@@ -674,6 +676,45 @@ export const movimientosController = {
       return reply.status(500).send(
         errorResponse({
           message: 'Error interno del servidor',
+          code: 500,
+          error: err
+        })
+      );
+    }
+  },
+
+  /**
+   * GET /movimientos/export-excel
+   * Exporta movimientos a Excel
+   */
+  exportExcel: async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      // Validar query parameters
+      const queryValidation = ExportMovimientosQuerySchema.safeParse(req.query);
+      if (!queryValidation.success) {
+        return reply.status(400).send(
+          errorResponse({
+            message: 'Parámetros de consulta inválidos',
+            code: 400,
+            error: queryValidation.error.errors
+          })
+        );
+      }
+
+      // Llamar al servicio
+      const { buffer, fileName } = await ExportMovimientosExcelService.execute(queryValidation.data);
+
+      // Configurar headers para la descarga
+      reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      reply.header('Content-Disposition', `attachment; filename=${fileName}`);
+
+      return reply.send(buffer);
+
+    } catch (err) {
+      console.error('Error en exportExcel:', err);
+      return reply.status(500).send(
+        errorResponse({
+          message: 'Error interno del servidor al exportar Excel',
           code: 500,
           error: err
         })

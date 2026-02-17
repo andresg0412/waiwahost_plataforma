@@ -89,11 +89,11 @@ export class MovimientosRepository {
    * Obtiene resumen diario por fecha y empresa
    */
   static async getResumenDiario(
-  fecha: string,
-  empresaId?: string
-): Promise<ResumenDiario> {
+    fecha: string,
+    empresaId?: string
+  ): Promise<ResumenDiario> {
 
-  let query = `
+    let query = `
     SELECT 
       fecha,
 
@@ -123,37 +123,37 @@ export class MovimientosRepository {
     WHERE fecha = $1
   `;
 
-  const params: any[] = [fecha];
+    const params: any[] = [fecha];
 
-  if (empresaId) {
-    query += ' AND id_empresa = $2';
-    params.push(empresaId);
-  }
+    if (empresaId) {
+      query += ' AND id_empresa = $2';
+      params.push(empresaId);
+    }
 
-  query += ' GROUP BY fecha';
+    query += ' GROUP BY fecha';
 
-  const { rows } = await pool.query(query, params);
+    const { rows } = await pool.query(query, params);
 
-  if (rows.length === 0) {
+    if (rows.length === 0) {
+      return {
+        fecha,
+        total_ingresos: 0,
+        total_egresos: 0,
+        total_deducibles: 0,
+        balance: 0,
+        cantidad_movimientos: 0
+      };
+    }
+
     return {
-      fecha,
-      total_ingresos: 0,
-      total_egresos: 0,
-      total_deducibles: 0,
-      balance: 0,
-      cantidad_movimientos: 0
+      fecha: rows[0].fecha,
+      total_ingresos: Number(rows[0].total_ingresos) || 0,
+      total_egresos: Number(rows[0].total_egresos) || 0,
+      total_deducibles: Number(rows[0].total_deducibles) || 0,
+      balance: Number(rows[0].balance) || 0,
+      cantidad_movimientos: Number(rows[0].cantidad_movimientos) || 0
     };
   }
-
-  return {
-    fecha: rows[0].fecha,
-    total_ingresos: Number(rows[0].total_ingresos) || 0,
-    total_egresos: Number(rows[0].total_egresos) || 0,
-    total_deducibles: Number(rows[0].total_deducibles) || 0,
-    balance: Number(rows[0].balance) || 0,
-    cantidad_movimientos: Number(rows[0].cantidad_movimientos) || 0
-  };
-}
 
 
   /**
@@ -464,5 +464,58 @@ export class MovimientosRepository {
     const query = 'SELECT 1 FROM empresas WHERE id_empresa = $1';
     const { rows } = await pool.query(query, [empresaId]);
     return rows.length > 0;
+  }
+
+  /**
+   * Obtiene movimientos filtrados para exportación a Excel
+   */
+  static async getMovimientosExport(filters: {
+    fecha_inicio: string;
+    fecha_fin: string;
+    id_inmueble?: string;
+    tipo?: string;
+    id_empresa: string;
+  }): Promise<Movimiento[]> {
+    let query = `
+      SELECT 
+        m.id,
+        m.fecha,
+        m.tipo,
+        m.concepto,
+        m.descripcion,
+        m.monto,
+        m.id_inmueble,
+        i.nombre as nombre_inmueble,
+        m.id_reserva,
+        r.codigo_reserva as codigo_reserva,
+        m.metodo_pago,
+        m.comprobante,
+        m.id_empresa,
+        m.fecha_creacion,
+        m.fecha_actualizacion,
+        m.plataforma_origen,
+        m.id_pago
+      FROM movimientos m
+      LEFT JOIN inmuebles i ON m.id_inmueble = i.id_inmueble::text
+      LEFT JOIN reservas r ON m.id_reserva = r.id_reserva::text
+      WHERE m.fecha >= $1 AND m.fecha <= $2 AND m.id_empresa = $3
+    `;
+
+    const params: any[] = [filters.fecha_inicio, filters.fecha_fin, filters.id_empresa];
+
+    if (filters.id_inmueble) {
+      query += ` AND m.id_inmueble = $${params.length + 1}`;
+      params.push(filters.id_inmueble);
+    }
+
+    if (filters.tipo) {
+      query += ` AND m.tipo = $${params.length + 1}`;
+      params.push(filters.tipo);
+    }
+
+    query += ` ORDER BY m.fecha ASC, m.fecha_creacion ASC`;
+
+    const { rows } = await pool.query(query, params);
+    return rows;
   }
 }

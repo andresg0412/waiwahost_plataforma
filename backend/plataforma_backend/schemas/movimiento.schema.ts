@@ -7,24 +7,24 @@ const fechaSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
   message: "La fecha debe tener formato YYYY-MM-DD"
 });
 
-  // Schema para validar que la fecha no sea futura
-  const fechaNoFuturaSchema = fechaSchema.refine((fecha) => {
-    const fechaMovimiento = new Date(fecha);
+// Schema para validar que la fecha no sea futura
+const fechaNoFuturaSchema = fechaSchema.refine((fecha) => {
+  const fechaMovimiento = new Date(fecha);
 
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
 
-    const maximo = new Date();
-    maximo.setMonth(maximo.getMonth() + 5);
-    maximo.setHours(23, 59, 59, 999);
+  const maximo = new Date();
+  maximo.setMonth(maximo.getMonth() + 5);
+  maximo.setHours(23, 59, 59, 999);
 
-    return (
-      fechaMovimiento >= hoy &&
-      fechaMovimiento <= maximo
-    );
-  }, {
-    message: "La fecha debe estar entre hoy y máximo 5 meses después"
-  });
+  return (
+    fechaMovimiento >= hoy &&
+    fechaMovimiento <= maximo
+  );
+}, {
+  message: "La fecha debe estar entre hoy y máximo 5 meses después"
+});
 
 
 // Schema para validar monto
@@ -81,44 +81,43 @@ const movimientoBaseSchema = z.object({
 
   // id_empresa: z.string().min(1, { message: "El ID de la empresa es requerido" }),
 
-  
+
   plataforma_origen: plataformaOrigenSchema
 });
 
 // Schema para crear movimiento con validación de concepto y plataforma
 export const CreateMovimientoSchema = movimientoBaseSchema
-.refine((data) => {
-  // Validar concepto según tipo
-  if (data.tipo === 'ingreso') {
-    return CONCEPTOS_INGRESOS.includes(data.concepto as any);
-  } else if (data.tipo === 'egreso') {
-    return CONCEPTOS_EGRESOS.includes(data.concepto as any);
-  } else if (data.tipo === 'deducible') {
-    return CONCEPTOS_DEDUCIBLES.includes(data.concepto as any);
-  }
-}, {
-  message: "El concepto no es válido para el tipo de movimiento especificado",
-  path: ["concepto"]
-}).refine((data) => {
-  // Validar que plataforma_origen solo se use en ingresos de reserva
-  if (data.plataforma_origen && (data.tipo !== 'ingreso' || data.concepto !== 'reserva')) {
-    return false;
-  }
-  return true;
-}, {
-  message: "La plataforma de origen solo es válida para movimientos de tipo 'ingreso' con concepto 'reserva'",
-  path: ["plataforma_origen"]
-})
-.refine((data) => {
-  // Validar que metodo_pago solo se use en deducibles
-  if (data.tipo !== 'deducible' && !data.metodo_pago) {
-    return false;
-  }
-  return true;
-}, {
-  message: "El método de pago es obligatorio para ingresos y egresos",
-  path: ["metodo_pago"]
-});
+  .refine((data) => {
+    // Validar concepto según tipo
+    if (data.tipo === 'ingreso') {
+      return CONCEPTOS_INGRESOS.includes(data.concepto as any);
+    } else if (data.tipo === 'egreso') {
+      return CONCEPTOS_EGRESOS.includes(data.concepto as any);
+    } else if (data.tipo === 'deducible') {
+      return CONCEPTOS_DEDUCIBLES.includes(data.concepto as any);
+    }
+  }, {
+    message: "El concepto no es válido para el tipo de movimiento especificado",
+    path: ["concepto"]
+  }).refine((data) => {
+    // Validar que plataforma_origen solo se use en ingresos de reserva
+    if (data.plataforma_origen && (data.tipo !== 'ingreso' || data.concepto !== 'reserva')) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "La plataforma de origen solo es válida para movimientos de tipo 'ingreso' con concepto 'reserva'",
+    path: ["plataforma_origen"]
+  }).refine((data) => {
+    // Validar que metodo_pago solo se use en deducibles
+    if (data.tipo !== 'deducible' && !data.metodo_pago) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "El método de pago es obligatorio para ingresos y egresos",
+    path: ["metodo_pago"]
+  });
 
 // Schema para editar movimiento (todos los campos opcionales)
 export const EditMovimientoSchema = z.object({
@@ -185,11 +184,21 @@ export const InmueblesSelectorrQuerySchema = z.object({
   empresa_id: z.string().optional()
 });
 
+// Schema para query parameters de exportar movimientos a Excel
+export const ExportMovimientosQuerySchema = z.object({
+  fecha_inicio: fechaSchema,
+  fecha_fin: fechaSchema,
+  id_inmueble: z.string().optional(),
+  tipo: z.enum(['ingreso', 'egreso', 'deducible']).optional(),
+  id_empresa: z.string().min(1, { message: "El ID de la empresa es requerido" })
+});
+
 // Tipos TypeScript derivados de los schemas
 export type CreateMovimientoInput = z.infer<typeof CreateMovimientoSchema>;
 export type EditMovimientoInput = z.infer<typeof EditMovimientoSchema>;
 export type MovimientosFechaQuery = z.infer<typeof MovimientosFechaQuerySchema>;
 export type MovimientosInmuebleQuery = z.infer<typeof MovimientosInmuebleQuerySchema>;
+export type ExportMovimientosQuery = z.infer<typeof ExportMovimientosQuerySchema>;
 export type MovimientoIdParam = z.infer<typeof MovimientoIdParamSchema>;
 export type FechaParam = z.infer<typeof FechaParamSchema>;
 export type InmueblesSelectorrQuery = z.infer<typeof InmueblesSelectorrQuerySchema>;

@@ -688,6 +688,17 @@ export const movimientosController = {
    * Exporta movimientos a Excel
    */
   exportExcel: async (req: FastifyRequest, reply: FastifyReply) => {
+    const ctx = req.userContext;
+    if (!ctx || !ctx.id || !ctx.empresaId) {
+      return reply.status(401).send(
+        errorResponse({
+          message: 'No autenticado o token inválido',
+          code: 401,
+          error: 'Unauthorized'
+        })
+      );
+    }
+
     try {
       // Validar query parameters
       const queryValidation = ExportMovimientosQuerySchema.safeParse(req.query);

@@ -564,6 +564,7 @@ export class ReservasRepository {
     if (!id || Object.keys(fields).length === 0) return null;
     // Mapeo de campos del modelo a la base de datos
     const fieldMap: Record<string, string> = {
+      id_inmueble: 'id_inmueble',
       fecha_inicio: 'fecha_inicio',
       fecha_fin: 'fecha_fin',
       numero_huespedes: 'numero_huespedes',

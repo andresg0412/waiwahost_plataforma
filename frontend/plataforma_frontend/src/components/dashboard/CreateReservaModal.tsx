@@ -71,7 +71,49 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
     return true; // No se requiere ningún dato obligatorio
   };
 
+  // Helper para verificar si un huésped tiene al menos un campo con datos reales
+  const hasHuespedData = (huesped: IHuespedForm): boolean => {
+    return !!(
+      (huesped.nombre && huesped.nombre.trim()) ||
+      (huesped.apellido && huesped.apellido.trim()) ||
+      (huesped.documento_numero && huesped.documento_numero.trim()) ||
+      (huesped.email && huesped.email.trim()) ||
+      (huesped.telefono && huesped.telefono.trim())
+    );
+  };
+
+  const clearHuespedFields = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      huespedes: prev.huespedes.map((h: IHuespedForm, i: number) =>
+        i === index
+          ? {
+            ...h,
+            nombre: '',
+            apellido: '',
+            email: '',
+            telefono: '',
+            documento_numero: '',
+            fecha_nacimiento: '',
+            motivo: '',
+            ciudad_residencia: '',
+            ciudad_procedencia: '',
+            pais_residencia: '',
+            pais_procedencia: '',
+          }
+          : h
+      )
+    }));
+  };
+
   const toggleGuest = (index: number) => {
+    // Si estamos en edición y el huésped no tiene datos reales, limpiar campos al expandir
+    if (isEdit && expandedGuest !== index) {
+      const huesped = formData.huespedes[index];
+      if (!hasHuespedData(huesped)) {
+        clearHuespedFields(index);
+      }
+    }
     setExpandedGuest(prev => (prev === index ? -1 : index));
   };
 
@@ -272,7 +314,9 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
       newErrors.numero_huespedes = 'Debe haber al menos 1 huésped';
     }
 
-    if (formData.numero_huespedes !== formData.huespedes.length) {
+    // En modo edición no se valida que el número de huéspedes coincida con los datos ingresados
+    // ya que los campos de huéspedes son opcionales
+    if (!isEdit && formData.numero_huespedes !== formData.huespedes.length) {
       newErrors.numero_huespedes = 'El número de huéspedes no coincide con los datos ingresados';
     }
 
@@ -300,7 +344,25 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onCreate(formData);
+      if (isEdit) {
+        // En edición: filtrar huéspedes sin datos reales y limpiar campos opcionales vacíos
+        // para que el backend no los valide (ej: motivo: '' falla el enum del schema)
+        const huespedesToSend = formData.huespedes
+          .filter(hasHuespedData)
+          .map(h => ({
+            ...h,
+            motivo: h.motivo && h.motivo.trim() ? h.motivo : undefined,
+            email: h.email && h.email.trim() ? h.email : undefined,
+            telefono: h.telefono && h.telefono.trim() ? h.telefono : undefined,
+            fecha_nacimiento: h.fecha_nacimiento && h.fecha_nacimiento.trim() ? h.fecha_nacimiento : undefined,
+            documento_numero: h.documento_numero && h.documento_numero.trim() ? h.documento_numero : undefined,
+            ciudad_residencia: h.ciudad_residencia && h.ciudad_residencia.trim() ? h.ciudad_residencia : undefined,
+            ciudad_procedencia: h.ciudad_procedencia && h.ciudad_procedencia.trim() ? h.ciudad_procedencia : undefined,
+          }));
+        onCreate({ ...formData, huespedes: huespedesToSend });
+      } else {
+        onCreate(formData);
+      }
     }
   };
 
@@ -409,6 +471,8 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
       huespedes: currentHuespedes
     }));
   };
+
+
 
   if (!open) return null;
 

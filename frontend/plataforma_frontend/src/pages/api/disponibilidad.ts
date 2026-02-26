@@ -34,7 +34,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
     if (!response.ok) {
-      return res.status(response.status).json({ error: 'Error en la API externa' });
+      let errorBody: any = { error: 'Error en la API externa' };
+      try { errorBody = await response.json(); } catch (_) { }
+      console.error('❌ Backend disponibilidad error:', response.status, errorBody);
+      return res.status(response.status).json(errorBody);
     }
     const data = await response.json();
     return res.status(200).json(data);

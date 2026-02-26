@@ -10,6 +10,7 @@ export async function tarjetaRegistroRoutes(server: FastifyInstance, opts: Fasti
         preHandler: [authMiddleware],
     }, tarjetaController.enviarTarjetaAlojamiento);
 
+
     // GET /tarjeta-registro/:id - Obtener tarjeta de alojamiento por ID de reserva
     server.get('/:id', {
         preHandler: [authMiddleware],
@@ -19,5 +20,5 @@ export async function tarjetaRegistroRoutes(server: FastifyInstance, opts: Fasti
     server.get('/estado/:id', {
         preHandler: [authMiddleware],
     }, tarjetaController.getEstadoTarjetaAlojamiento);
-    
+
 }

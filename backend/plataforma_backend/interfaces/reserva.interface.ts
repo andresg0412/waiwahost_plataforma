@@ -28,6 +28,9 @@ export interface HuespedPrincipal {
   apellido: string;
   email?: string;
   telefono?: string;
+  documento_tipo?: string;
+  documento_numero?: string;
+  fecha_nacimiento?: string;
   ciudadResidencia?: string,
   ciudadProcedencia?: string,
   motivo?: string

@@ -58,7 +58,10 @@ export class GetReservasService {
       nombre: principal.nombre,
       apellido: principal.apellido,
       email: principal.email,
-      telefono: principal.telefono
+      telefono: principal.telefono,
+      documento_tipo: principal.documento_tipo,
+      documento_numero: principal.documento_numero,
+      fecha_nacimiento: principal.fecha_nacimiento,
     };
   }
 

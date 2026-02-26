@@ -59,6 +59,8 @@ export interface IHuespedForm {
   motivo: string;
   ciudad_residencia: string;
   ciudad_procedencia: string;
+  pais_residencia?: string;
+  pais_procedencia?: string;
 }
 
 export interface IReservaForm {

@@ -1,12 +1,12 @@
 import { apiFetch } from './apiFetch';
-import { IHuespedTableData, IHuespedEditableFields, IHuespedDetailData } from '../interfaces/Huesped';
+import { IHuespedTableData, IHuespedEditableFields, IHuespedDetailData, IHuespedSelectorData } from '../interfaces/Huesped';
 
 // Obtener todos los huéspedes
 export const getHuespedesApi = async (id_empresa?: number): Promise<IHuespedTableData[]> => {
   try {
     const url = id_empresa
       ? `/api/huespedes/getHuespedes?id_empresa=${id_empresa}`
-      : '/api/huespedes';
+      : '/api/huespedes/getHuespedes';
 
     const data = await apiFetch(url, {
       method: 'GET',
@@ -15,6 +15,39 @@ export const getHuespedesApi = async (id_empresa?: number): Promise<IHuespedTabl
     return data as IHuespedTableData[];
   } catch (error) {
     console.error('Error en getHuespedesApi:', error);
+    throw error;
+  }
+};
+
+
+// Obtener huéspedes simplificados para el selector (solo id, nombre, apellido, documento)
+export const getHuespedesSelectorApi = async (id_empresa?: number): Promise<IHuespedSelectorData[]> => {
+  try {
+    const url = id_empresa
+      ? `/api/huespedes/getHuespedSelector?id_empresa=${id_empresa}`
+      : '/api/huespedes/getHuespedSelector';
+
+    const data = await apiFetch(url, {
+      method: 'GET',
+    });
+
+    return (data as IHuespedSelectorData[]) || [];
+  } catch (error) {
+    console.error('Error en getHuespedesSelectorApi:', error);
+    throw error;
+  }
+};
+
+// Obtener detalle completo de un huésped por ID (incluye motivo, ciudad_residencia, etc.)
+export const getHuespedDetailApi = async (id: number): Promise<IHuespedDetailData> => {
+  try {
+    const data = await apiFetch(`/api/huespedes/getHuespedDetail/${id}`, {
+      method: 'GET',
+    });
+
+    return data as IHuespedDetailData;
+  } catch (error) {
+    console.error('Error en getHuespedDetailApi:', error);
     throw error;
   }
 };

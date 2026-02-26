@@ -48,7 +48,8 @@ export async function getReservasEnRango({ start, end, inmuebleId, estado }: { s
            h.nombre as huesped_nombre, h.apellido as huesped_apellido
     FROM reservas r
     INNER JOIN inmuebles i ON r.id_inmueble = i.id_inmueble
-    LEFT JOIN huespedes h ON h.id_reserva = r.id_reserva AND h.es_principal = true
+    LEFT JOIN huespedes_reservas hr ON hr.id_reserva = r.id_reserva AND hr.es_principal = true
+    LEFT JOIN huespedes h ON h.id_huesped = hr.id_huesped
     WHERE (r.fecha_inicio <= $2 AND r.fecha_fin >= $1) AND i.estado = 'activo'
   `;
   const params: any[] = [start, end];

@@ -10,8 +10,8 @@ import { getPaises } from '../../auth/getPaises';
 import { getCiudadesByPais, getCiudades } from '../../auth/getCiudadPais';
 import { IPais } from '../../interfaces/Pais';
 import { ICiudad } from '../../interfaces/Ciudad';
-import { getHuespedesApi, getHuespedDetalleApi } from '../../auth/huespedesApi';
-import { IHuespedTableData } from '../../interfaces/Huesped';
+import { getHuespedesSelectorApi, getHuespedDetailApi } from '../../auth/huespedesApi';
+import { IHuespedSelectorData } from '../../interfaces/Huesped';
 
 interface CreateReservaModalProps {
   open: boolean;
@@ -67,9 +67,9 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
   const [paises, setPaises] = useState<IPais[]>([]);
   const [ciudadesByPais, setCiudadesByPais] = useState<Record<number, ICiudad[]>>({});
   const [loadingPaises, setLoadingPaises] = useState(false);
-  const [guestOptions, setGuestOptions] = useState<IHuespedTableData[]>([]);
+  const [guestOptions, setGuestOptions] = useState<IHuespedSelectorData[]>([]);
   const [guestSearchQueries, setGuestSearchQueries] = useState<Record<number, string>>({});
-  const [showGuestDropdown, setShowGuestDropdown] = useState<Record<number, boolean>>({});
+  const [showGuestDropdown, setShowGuestDropdown] = useState<Record<number, boolean>>({});;
 
   const handleGuestSearchChange = (index: number, query: string) => {
     setGuestSearchQueries((prev: Record<number, string>) => ({ ...prev, [index]: query }));
@@ -84,11 +84,11 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
     const query = guestSearchQueries[index] || '';
     if (!query) return guestOptions;
     const lowerQuery = query.toLowerCase();
-    return guestOptions.filter((g: IHuespedTableData) =>
+    return guestOptions.filter((g: IHuespedSelectorData) =>
       (g.nombre?.toLowerCase() || '').includes(lowerQuery) ||
       (g.apellido?.toLowerCase() || '').includes(lowerQuery) ||
       (g.documento_numero || '').includes(lowerQuery)
-    ).slice(0, 5); // Limit to 5 results for clean UI
+    ).slice(0, 5);
   };
 
   // Helper para verificar si un huésped tiene todos los datos completos
@@ -202,17 +202,8 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
 
   const loadGuestOptions = async () => {
     try {
-      const g = await getHuespedesApi();
-      const validGuests = g.filter((guest: IHuespedTableData) => {
-        const nombre = (guest.nombre || '').trim().toLowerCase();
-        const apellido = (guest.apellido || '').trim().toLowerCase();
-
-        if (!nombre || nombre === 'sin nombre' || nombre === 'null') return false;
-        if (!apellido || apellido === 'sin apellido' || apellido === 'null') return false;
-
-        return true;
-      });
-      setGuestOptions(validGuests);
+      const g = await getHuespedesSelectorApi();
+      setGuestOptions(g || []);
     } catch (e) {
       console.error('Error loading guests', e);
     }
@@ -220,8 +211,38 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
 
   const handleSelectGuest = async (id: number, index: number = 0) => {
     try {
-      const detalle = await getHuespedDetalleApi(id);
+      const detalle = await getHuespedDetailApi(id);
       if (detalle) {
+        // Resolver el país a partir del nombre de la ciudad usando getCiudades()
+        let paisResidenciaId = '';
+        let paisProcedenciaId = '';
+
+        try {
+          const allCiudades = await getCiudades();
+
+          if (detalle.ciudad_residencia) {
+            const ciudadMatch = allCiudades.find(
+              (c: ICiudad) => c.nombre.toLowerCase() === detalle.ciudad_residencia!.toLowerCase()
+            );
+            if (ciudadMatch) {
+              paisResidenciaId = ciudadMatch.id_pais.toString();
+              await fetchCiudades(ciudadMatch.id_pais);
+            }
+          }
+
+          if (detalle.ciudad_procedencia) {
+            const ciudadMatch = allCiudades.find(
+              (c: ICiudad) => c.nombre.toLowerCase() === detalle.ciudad_procedencia!.toLowerCase()
+            );
+            if (ciudadMatch) {
+              paisProcedenciaId = ciudadMatch.id_pais.toString();
+              await fetchCiudades(ciudadMatch.id_pais);
+            }
+          }
+        } catch (err) {
+          console.error('Error resolviendo países desde ciudades', err);
+        }
+
         setFormData((prev: IReservaForm) => {
           const newHuespedes = [...prev.huespedes];
           newHuespedes[index] = {
@@ -230,20 +251,17 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
             apellido: detalle.apellido || '',
             email: detalle.email || '',
             telefono: detalle.telefono || '',
-            documento_tipo: detalle.documento_tipo as any || 'cedula',
+            documento_tipo: (detalle.documento_tipo as any) || 'cedula',
             documento_numero: detalle.documento_numero || '',
             fecha_nacimiento: detalle.fecha_nacimiento?.split('T')[0] || '',
-            motivo: index === 0 ? detalle.motivo || '' : newHuespedes[index].motivo,
+            motivo: detalle.motivo || (index === 0 ? '' : newHuespedes[index].motivo),
             ciudad_residencia: detalle.ciudad_residencia || '',
             ciudad_procedencia: detalle.ciudad_procedencia || '',
-            pais_residencia: detalle.pais_residencia?.toString() || '',
-            pais_procedencia: detalle.pais_procedencia?.toString() || '',
+            pais_residencia: paisResidenciaId,
+            pais_procedencia: paisProcedenciaId,
           };
           return { ...prev, huespedes: newHuespedes };
         });
-
-        if (detalle.pais_residencia) fetchCiudades(Number(detalle.pais_residencia));
-        if (detalle.pais_procedencia) fetchCiudades(Number(detalle.pais_procedencia));
       }
     } catch (error) {
       console.error('Error fetching guest details', error);
@@ -807,7 +825,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
                                     >
                                       Nuevo huésped (Limpiar datos)
                                     </li>
-                                    {getFilteredGuests(index).map((guest: IHuespedTableData) => (
+                                    {getFilteredGuests(index).map((guest: IHuespedSelectorData) => (
                                       <li
                                         key={guest.id_huesped}
                                         className="px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer flex justify-between"

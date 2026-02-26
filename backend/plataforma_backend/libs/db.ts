@@ -44,9 +44,11 @@ export async function getInmueblesDisponibles({ inmuebleId, idEmpresa }: { inmue
  */
 export async function getReservasEnRango({ start, end, inmuebleId, estado }: { start: string; end: string; inmuebleId?: string; estado?: string }) {
   let query = `
-    SELECT r.id_reserva as id, r.id_inmueble as inmuebleId, r.fecha_inicio as start, r.fecha_fin as end, r.estado 
+    SELECT r.id_reserva as id, r.id_inmueble as inmuebleId, r.fecha_inicio as start, r.fecha_fin as end, r.estado, r.total_reserva,
+           h.nombre as huesped_nombre, h.apellido as huesped_apellido
     FROM reservas r
     INNER JOIN inmuebles i ON r.id_inmueble = i.id_inmueble
+    LEFT JOIN huespedes h ON h.id_reserva = r.id_reserva AND h.es_principal = true
     WHERE (r.fecha_inicio <= $2 AND r.fecha_fin >= $1) AND i.estado = 'activo'
   `;
   const params: any[] = [start, end];

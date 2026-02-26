@@ -1,9 +1,9 @@
 
 import React, { useMemo, useState, useEffect } from "react";
-import { addDays, format, isWithinInterval, parseISO } from "date-fns";
+import { addDays, format, isSameMonth, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "../atoms/Button";
-import { Plus, Filter, Lock, CheckCircle, AlertTriangle } from "lucide-react";
+import { Plus, Filter, Lock, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import CreateReservaModal from "./CreateReservaModal";
 import CreateBloqueoModal from "./CreateBloqueoModal";
 import ReservaDetailModal from "./ReservaDetailModal";
@@ -12,6 +12,9 @@ import { createReservaApi, getReservaDetalleApi, editReservaApi } from "../../au
 import { IBloqueo } from "../../interfaces/Bloqueo";
 import { deleteBloqueoApi } from "../../auth/bloqueosApi";
 
+// ─────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────
 interface AvailabilityInmueble {
   id: string;
   nombre: string;
@@ -23,16 +26,19 @@ interface AvailabilityReserva {
   inmuebleId: string;
   start: string;
   end: string;
-  estado?: string; // puede ser 'pendiente', 'confirmado', 'anulado', 'bloqueado' etc.
+  estado?: string;
   tipo_bloqueo?: string;
   descripcion?: string;
+  total_reserva?: number | null;
+  huesped_nombre?: string | null;
+  huesped_apellido?: string | null;
 }
 
-// Función auxiliar para parsear fechas YYYY-MM-DD sin ajuste de zona horaria
-// Crea la fecha como si fuera local a las 00:00:00
+// ─────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────
 function parseDateNoTz(dateStr: string): Date {
   if (!dateStr) return new Date();
-  // Asumimos formato YYYY-MM-DD
   const parts = dateStr.split('T')[0].split('-');
   if (parts.length === 3) {
     return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
@@ -40,10 +46,9 @@ function parseDateNoTz(dateStr: string): Date {
   return parseISO(dateStr);
 }
 
-// Genera un array de fechas entre dos fechas
 function getDatesInRange(start: Date, end: Date) {
   const dates = [];
-  let current = start;
+  let current = new Date(start);
   while (current <= end) {
     dates.push(new Date(current));
     current = addDays(current, 1);
@@ -51,42 +56,19 @@ function getDatesInRange(start: Date, end: Date) {
   return dates;
 }
 
-// Determina si un inmueble está ocupado en una fecha
-function getReservaEnFecha(reservas: AvailabilityReserva[], inmuebleId: string, date: Date) {
-  return reservas.find(r => {
-    // Usar parseDateNoTz para evitar saltos de día por timezone
-    const rStart = parseDateNoTz(r.start);
-    const rEnd = parseDateNoTz(r.end);
-
-    // Un día está ocupado si cae dentro del rango [start, end)
-    // Normalmente check-out (end) no cuenta como ocupado para pernoctar, 
-    // pero depende de la lógica exacta. Aquí usamos isWithinInterval inclusivo.
-    // Ajuste: si la fecha es igual al end, suele ser día de salida y estar libre para otra entrada.
-    // Pero isWithinInterval incluye el end. Revisemos lógica de negocio estándar hotelera.
-    // Si r.start <= date < r.end => Ocupado. (Noche del check-in ocupada, noche antes del check-out ocupada).
-    // isWithinInterval(date, { start, end }) incluye ambos extremos.
-    // Para visualización de "Noches", solemos querer ver ocupado hasta el día antes de salida.
-
-    // Opción A: isWithinInterval estricto (incluye start y end)
-    // return r.inmuebleId === inmuebleId && isWithinInterval(date, { start: rStart, end: rEnd }) ...
-
-    // Opción B: Excluir fecha fin (check-out)
-    // Un día se ve "ocupado" si es >= start Y < end.
-    // Si date es igual a start, está ocupado (noche de entrada).
-    // Si date es igual a end, es salida (usualmente liberado a mediodía).
-
-    if (r.inmuebleId !== inmuebleId) return false;
-
-    // Normalizar 'date' para comparar solo fechas (sin horas)
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-    return d >= rStart && d < rEnd &&
-      (r.estado === 'pendiente' || r.estado === 'confirmada' || r.estado === 'en_proceso' || r.estado === 'completada' || r.estado === 'bloqueado' || r.estado === undefined);
-  });
+function formatCOP(n?: number | null) {
+  if (n == null) return '';
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency', currency: 'COP',
+    minimumFractionDigits: 0, maximumFractionDigits: 0
+  }).format(n);
 }
 
+// ─────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────
 const today = new Date();
-today.setHours(0, 0, 0, 0); // Normalizar hoy
+today.setHours(0, 0, 0, 0);
 const defaultStart = today;
 const defaultEnd = addDays(today, 14);
 
@@ -98,64 +80,50 @@ const periodosFijos = [
   { label: "2 meses", days: 60 },
 ];
 
-// Paleta de colores para diferenciar reservas
-// Cada reserva tendrá un borde de color único basado en su ID
-const reservaColorPalette = [
-  { border: 'border-l-4 border-rose-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-purple-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-indigo-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-cyan-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-teal-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-emerald-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-lime-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-amber-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-orange-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-red-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-pink-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-  { border: 'border-l-4 border-fuchsia-500', bg: 'bg-blue-100', hover: 'hover:bg-blue-200' },
-];
-
-// Paleta para reservas pendientes (tonos amarillos con bordes distintivos)
-const reservaPendienteColorPalette = [
-  { border: 'border-l-4 border-rose-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-purple-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-indigo-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-cyan-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-teal-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-emerald-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-lime-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-amber-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-orange-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-red-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-pink-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-  { border: 'border-l-4 border-fuchsia-600', bg: 'bg-yellow-100', hover: 'hover:bg-yellow-200' },
-];
-
-// Función para obtener color de reserva basado en su ID
-const getReservaColor = (reservaId: string, isPendiente: boolean) => {
-  // Convertir el ID a un número hash para asignar color consistente
-  const hash = reservaId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const palette = isPendiente ? reservaPendienteColorPalette : reservaColorPalette;
-  const colorIndex = hash % palette.length;
-  return palette[colorIndex];
+const ESTADO_COLORS: Record<string, { bg: string; text: string; badge: string; badgeText: string }> = {
+  confirmada: { bg: 'bg-[#1e3a8a]', text: 'text-white', badge: 'bg-white/20', badgeText: 'text-white' },
+  pendiente: { bg: 'bg-[#a16207]', text: 'text-white', badge: 'bg-white/25', badgeText: 'text-white' },
+  bloqueado: { bg: 'bg-[#6b7280]', text: 'text-slate-200', badge: 'bg-black/20', badgeText: 'text-slate-300' },
 };
 
+const ESTADO_LABEL: Record<string, string> = {
+  confirmada: 'Confirmada',
+  pendiente: 'Pago pendiente',
+  bloqueado: 'Bloqueado',
+};
+
+const CELL_W = 76;
+const ROW_H = 70;
+const SIDEBAR_W = 260;
+
+function getEstadoStyle(estado?: string) {
+  return ESTADO_COLORS[estado ?? ''] ?? ESTADO_COLORS.pendiente;
+}
+
+// ─────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────
 const Availability: React.FC = () => {
 
+  // ── Filter state (original filters) ──────────
   const [startDate, setStartDate] = useState(defaultStart);
   const [endDate, setEndDate] = useState(defaultEnd);
-  const [inmuebleId, setInmuebleId] = useState<string | "">("");
+  const [inmuebleId, setInmuebleId] = useState<string>("");
   const [estado, setEstado] = useState<"todos" | "ocupado" | "pendiente" | "disponible">("todos");
   const [periodoFijo, setPeriodoFijo] = useState<number | null>(null);
+  const [ciudadFilter, setCiudadFilter] = useState<string>("");
+  const [search, setSearch] = useState('');
+
+  // ── Calendar window navigation ────────────────
+  const [windowStart, setWindowStart] = useState(() => addDays(today, -3));
+
+  // ── Data ──────────────────────────────────────
   const [inmuebles, setInmuebles] = useState<AvailabilityInmueble[]>([]);
   const [reservas, setReservas] = useState<AvailabilityReserva[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filtro de Ciudad
-  const [ciudadFilter, setCiudadFilter] = useState<string>("");
-
-  // Modales
+  // ── Modals ────────────────────────────────────
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreateBloqueoModalOpen, setIsCreateBloqueoModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -164,44 +132,67 @@ const Availability: React.FC = () => {
   const [reservaError, setReservaError] = useState<string | null>(null);
   const [selectedBloqueo, setSelectedBloqueo] = useState<IBloqueo | undefined>(undefined);
   const [isEditBloqueoMode, setIsEditBloqueoMode] = useState(false);
-
-  // Modales de notificación y confirmación
   const [notifModal, setNotifModal] = useState<{ open: boolean; message: string }>({ open: false, message: '' });
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
 
-  // Calcular fechas a mostrar
-  const fechas = useMemo(() => {
-    if (periodoFijo) {
-      return getDatesInRange(today, addDays(today, periodoFijo - 1));
-    }
-    return getDatesInRange(startDate, endDate);
-  }, [startDate, endDate, periodoFijo]);
+  // ── Derived dates ─────────────────────────────
+  // Memoize DAYS_VISIBLE and windowEnd so they don't create new object references on every render
+  const DAYS_VISIBLE = useMemo(
+    () => periodoFijo ?? Math.max(8, Math.round((endDate.getTime() - startDate.getTime()) / 86400000) + 1),
+    [periodoFijo, startDate, endDate]
+  );
+  const windowEnd = useMemo(() => addDays(windowStart, DAYS_VISIBLE - 1), [windowStart, DAYS_VISIBLE]);
+  const fechas = useMemo(() => getDatesInRange(windowStart, windowEnd), [windowStart, windowEnd]);
 
-  // Fetch disponibilidad
+  // Stable string values used as useEffect deps to avoid reference-equality issues with Date objects
+  const windowStartStr = useMemo(() => format(windowStart, 'yyyy-MM-dd'), [windowStart]);
+  const windowEndStr = useMemo(() => format(windowEnd, 'yyyy-MM-dd'), [windowEnd]);
+
+  const cidadades = useMemo(() => {
+    const s = new Set(inmuebles.map(i => i.ciudad).filter(Boolean) as string[]);
+    return Array.from(s).sort();
+  }, [inmuebles]);
+
+  const inmueblesFiltrados = useMemo(() => {
+    return inmuebles.filter(i => {
+      const matchSearch = !search || i.nombre.toLowerCase().includes(search.toLowerCase());
+      const matchCiudad = !ciudadFilter || i.ciudad === ciudadFilter;
+      const matchId = !inmuebleId || i.id === inmuebleId;
+      return matchSearch && matchCiudad && matchId;
+    });
+  }, [inmuebles, search, ciudadFilter, inmuebleId]);
+
+  const monthGroups = useMemo(() => {
+    const groups: { month: string; dates: Date[] }[] = [];
+    fechas.forEach(d => {
+      const key = format(d, 'MMMM yyyy', { locale: es });
+      const last = groups[groups.length - 1];
+      if (last && last.month === key) last.dates.push(d);
+      else groups.push({ month: key, dates: [d] });
+    });
+    return groups;
+  }, [fechas]);
+
+  // ── Fetch ─────────────────────────────────────
   const fetchDisponibilidad = async () => {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams();
-      const start = format(fechas[0], "yyyy-MM-dd");
-      const end = format(fechas[fechas.length - 1], "yyyy-MM-dd");
-      params.append("start", start);
-      params.append("end", end);
-      if (inmuebleId) params.append("inmuebleId", inmuebleId);
-      if (estado && estado !== "todos") params.append("estado", estado);
-
       const token = localStorage.getItem('token');
+      const params = new URLSearchParams();
+      params.append('start', format(windowStart, 'yyyy-MM-dd'));
+      params.append('end', format(windowEnd, 'yyyy-MM-dd'));
+      if (inmuebleId) params.append('inmuebleId', inmuebleId);
+      if (estado && estado !== 'todos') params.append('estado', estado);
       const res = await fetch(`/api/disponibilidad?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error("Error consultando disponibilidad");
+      if (!res.ok) throw new Error('Error consultando disponibilidad');
       const data = await res.json();
-      setInmuebles(data.inmuebles);
-      setReservas(data.reservas);
+      setInmuebles(data.inmuebles ?? []);
+      setReservas(data.reservas ?? []);
     } catch (err: any) {
-      setError(err.message || "Error desconocido");
+      setError(err.message || 'Error desconocido');
     } finally {
       setLoading(false);
     }
@@ -210,77 +201,74 @@ const Availability: React.FC = () => {
   useEffect(() => {
     fetchDisponibilidad();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fechas, inmuebleId, estado]);
+  }, [windowStartStr, windowEndStr, inmuebleId, estado]);
 
-  // Obtener lista de ciudades únicas
-  const ciudades = useMemo(() => {
-    const cities = new Set(inmuebles.map(i => i.ciudad).filter(Boolean));
-    return Array.from(cities).sort();
-  }, [inmuebles]);
+  // ── Navigation ────────────────────────────────
+  const navWeek = (dir: 1 | -1) => setWindowStart(d => addDays(d, 7 * dir));
+  const goToday = () => setWindowStart(addDays(today, -3));
 
-  // Filtrar inmuebles
-  const inmueblesFiltrados = useMemo(() => {
-    let filtered = inmuebles;
-    if (inmuebleId) {
-      filtered = filtered.filter(i => i.id === inmuebleId);
-    }
-    if (ciudadFilter) {
-      filtered = filtered.filter(i => i.ciudad === ciudadFilter);
-    }
-    return filtered;
-  }, [inmuebles, inmuebleId, ciudadFilter]);
-
-  // Handlers
   const handlePeriodoFijoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if (value === "") {
-      setPeriodoFijo(null);
-    } else {
-      setPeriodoFijo(Number(value));
-    }
+    setPeriodoFijo(value === '' ? null : Number(value));
   };
 
-  const handleCellClick = async (reserva: AvailabilityReserva | undefined) => {
-    if (reserva) {
-      if (reserva.estado === 'bloqueado') {
-        const bloqueoData: IBloqueo = {
-          id: parseInt(reserva.id.replace('blk-', '')),
-          id_inmueble: parseInt(reserva.inmuebleId),
-          fecha_inicio: reserva.start,
-          fecha_fin: reserva.end,
-          tipo_bloqueo: (reserva.tipo_bloqueo as any) || 'mantenimiento',
-          descripcion: reserva.descripcion
-        };
-        setSelectedBloqueo(bloqueoData);
-        setIsEditBloqueoMode(true);
-        setIsCreateBloqueoModalOpen(true);
-      } else {
-        try {
-          const detail = await getReservaDetalleApi(parseInt(reserva.id));
-          setSelectedReservaDetail(detail);
-          setIsDetailModalOpen(true);
-        } catch (error) {
-          console.error("Error al cargar detalle de reserva", error);
-          alert("Error al cargar los detalles de la reserva");
-        }
+  // ── Bar calculation ───────────────────────────
+  const getBarsForInmueble = (inmId: string) => {
+    const bars: { reserva: AvailabilityReserva; colStart: number; colSpan: number }[] = [];
+    reservas.forEach(r => {
+      if (r.inmuebleId !== inmId) return;
+      if (!['pendiente', 'confirmada', 'en_proceso', 'completada', 'bloqueado', undefined].includes(r.estado)) return;
+      // Filter by estado filter
+      if (estado === 'disponible') return;
+      if (estado === 'ocupado' && r.estado === 'bloqueado') return;
+      if (estado === 'bloqueado' && r.estado !== 'bloqueado') return;
+      if (estado === 'pendiente' && r.estado !== 'pendiente') return;
+
+      const rStart = parseDateNoTz(r.start);
+      const rEnd = parseDateNoTz(r.end);
+
+      const firstVisible = fechas.findIndex(d => d >= rStart && d < rEnd);
+      if (firstVisible === -1) return;
+
+      let lastVisible = firstVisible;
+      for (let i = firstVisible; i < fechas.length; i++) {
+        if (fechas[i] < rEnd) lastVisible = i;
+        else break;
       }
+
+      bars.push({ reserva: r, colStart: firstVisible, colSpan: Math.max(1, lastVisible - firstVisible + 1) });
+    });
+    return bars;
+  };
+
+  // ── Event handlers ────────────────────────────
+  const handleBarClick = async (reserva: AvailabilityReserva) => {
+    if (reserva.estado === 'bloqueado') {
+      const bloqueoData: IBloqueo = {
+        id: parseInt(reserva.id.replace('blk-', '')),
+        id_inmueble: parseInt(reserva.inmuebleId),
+        fecha_inicio: reserva.start,
+        fecha_fin: reserva.end,
+        tipo_bloqueo: (reserva.tipo_bloqueo as any) || 'mantenimiento',
+        descripcion: reserva.descripcion
+      };
+      setSelectedBloqueo(bloqueoData);
+      setIsEditBloqueoMode(true);
+      setIsCreateBloqueoModalOpen(true);
     } else {
-      // Si la celda está vacía se podría abrir modal de creación con fechas preseleccionadas
-      // Setear fechas y abrir modal... por ahora manual
+      try {
+        const detail = await getReservaDetalleApi(parseInt(reserva.id));
+        setSelectedReservaDetail(detail);
+        setIsDetailModalOpen(true);
+      } catch {
+        alert('Error al cargar los detalles de la reserva');
+      }
     }
   };
 
   const handleCreateBloqueoSuccess = () => {
     fetchDisponibilidad();
-    setNotifModal({
-      open: true,
-      message: isEditBloqueoMode ? 'Bloqueo actualizado exitosamente' : 'Bloqueo creado exitosamente',
-    });
-  };
-
-  // Lo llama CreateBloqueoModal cuando el usuario presiona Eliminar
-  const handleDeleteBloqueoRequest = () => {
-    setIsCreateBloqueoModalOpen(false); // cierra el modal de edición
+    setNotifModal({ open: true, message: isEditBloqueoMode ? 'Bloqueo actualizado exitosamente' : 'Bloqueo creado exitosamente' });
   };
 
   const handleConfirmDelete = async () => {
@@ -294,12 +282,9 @@ const Availability: React.FC = () => {
       setNotifModal({ open: true, message: 'Bloqueo eliminado exitosamente' });
     } catch (err: any) {
       setConfirmDeleteModal(false);
-      let errorMsg = err.message || 'Error al eliminar el bloqueo';
-      try {
-        const parsed = JSON.parse(errorMsg);
-        if (parsed.message) errorMsg = parsed.message;
-      } catch (_) { /* no es JSON */ }
-      setNotifModal({ open: true, message: errorMsg });
+      let msg = err.message || 'Error al eliminar el bloqueo';
+      try { const p = JSON.parse(msg); if (p.message) msg = p.message; } catch (_) { }
+      setNotifModal({ open: true, message: msg });
     }
   };
 
@@ -307,32 +292,18 @@ const Availability: React.FC = () => {
     try {
       setReservaError(null);
       if (isEditMode && selectedReservaDetail) {
-        // Transformar IReservaForm a lo que espera editReservaApi (incluyendo ID)
-        const dataToUpdate = {
-          ...data,
-          id: selectedReservaDetail.id,
-        };
-        await editReservaApi(dataToUpdate);
-        alert("Reserva actualizada exitosamente");
+        await editReservaApi({ ...data, id: selectedReservaDetail.id });
+        alert('Reserva actualizada exitosamente');
       } else {
         await createReservaApi(data);
-        alert("Reserva creada exitosamente");
+        alert('Reserva creada exitosamente');
       }
       setIsCreateModalOpen(false);
       setIsEditMode(false);
-      fetchDisponibilidad(); // Refrescar grid
+      fetchDisponibilidad();
     } catch (error) {
-      console.error("Error al guardar reserva:", error);
       let msg = error instanceof Error ? error.message : 'Error al guardar reserva';
-
-      // Intentar farmatear si es JSON
-      try {
-        const parsed = JSON.parse(msg);
-        if (parsed.message) msg = parsed.message;
-      } catch (e) {
-        // No es JSON
-      }
-
+      try { const p = JSON.parse(msg); if (p.message) msg = p.message; } catch (_) { }
       if (msg.includes('ocupadas') || msg.includes('traslap') || msg.includes('disponibilidad') || msg.includes('bloqueadas')) {
         setReservaError(msg);
       } else {
@@ -342,71 +313,49 @@ const Availability: React.FC = () => {
   };
 
   const handleEditFromDetail = () => {
-    if (selectedReservaDetail) {
-      setIsDetailModalOpen(false);
-      setIsEditMode(true);
-      // Mapear IReservaTableData a IReservaForm si es necesario o pasar directamente si son compatibles
-      // IReservaTableData extiende IReservaForm pero tiene campos extra? Revisar interfaces.
-      // CreateReservaModal acepta initialData: IReservaForm
-      // Necesitamos asegurar compatibilidad
-
-      // Transformamos lo que tenemos en detail a lo que espera el form
-      const initialForm: IReservaForm = {
-        id_inmueble: parseInt(selectedReservaDetail.id_inmueble as unknown as string) || 0, // Ajustar según tipo real
-        fecha_inicio: selectedReservaDetail.fecha_inicio,
-        fecha_fin: selectedReservaDetail.fecha_fin,
-        numero_huespedes: selectedReservaDetail.numero_huespedes,
-        huespedes: selectedReservaDetail.huespedes || [],
-        precio_total: selectedReservaDetail.precio_total,
-        total_reserva: selectedReservaDetail.total_reserva,
-        total_pagado: selectedReservaDetail.total_pagado,
-        estado: selectedReservaDetail.estado,
-        observaciones: selectedReservaDetail.observaciones,
-        id_empresa: selectedReservaDetail.id_empresa,
-        plataforma_origen: selectedReservaDetail.plataforma_origen,
-      };
-
-      // CreateReservaModal usa initialData
-      // Hack: CreateReservaModal mantiene estado interno, al pasar initialData se resetea en useEffect
-
-      setIsCreateModalOpen(true);
-    }
+    if (!selectedReservaDetail) return;
+    setIsDetailModalOpen(false);
+    setIsEditMode(true);
+    setIsCreateModalOpen(true);
   };
 
+  const todayColIndex = fechas.findIndex(d =>
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate()
+  );
+
+  // ── Render ────────────────────────────────────
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 bg-white rounded-lg shadow-md flex flex-col gap-4">
+
+      {/* ── Title + action buttons ── */}
+      <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Disponibilidad de Inmuebles</h2>
-        <div className="flex gap-6">
+        <div className="flex gap-3">
           <Button
             onClick={() => { setIsEditMode(false); setIsCreateModalOpen(true); }}
             className="bg-tourism-teal hover:bg-tourism-teal/80 text-white flex items-center gap-2"
           >
-            <Plus className="h-4 w-4" />
-            Crear Reserva
+            <Plus className="h-4 w-4" /> Crear Reserva
           </Button>
           <Button
-            onClick={() => {
-              setSelectedBloqueo(undefined);
-              setIsEditBloqueoMode(false);
-              setIsCreateBloqueoModalOpen(true);
-            }}
-            className="bg-tourism-teal hover:bg-tourism-teal/80 text-white flex items-center gap-2 ml-3"
+            onClick={() => { setSelectedBloqueo(undefined); setIsEditBloqueoMode(false); setIsCreateBloqueoModalOpen(true); }}
+            className="bg-tourism-teal hover:bg-tourism-teal/80 text-white flex items-center gap-2"
           >
-            <Lock className="h-4 w-4" />
-            Crear Bloqueo
+            <Lock className="h-4 w-4" /> Crear Bloqueo
           </Button>
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+      {/* ── Original filters ── */}
+      <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
         <div>
           <label className="block text-sm font-medium mb-1">Periodo fijo</label>
           <select
             value={periodoFijo ?? ""}
             onChange={handlePeriodoFijoChange}
-            className="border rounded px-3 py-2 w-full focus:ring-2 focus:ring-tourism-teal focus:border-transparent outline-none"
+            className="border rounded px-3 py-2 focus:ring-2 focus:ring-tourism-teal focus:border-transparent outline-none"
           >
             <option value="">Personalizado</option>
             {periodosFijos.map(p => (
@@ -414,32 +363,40 @@ const Availability: React.FC = () => {
             ))}
           </select>
         </div>
+
         {!periodoFijo && (
           <>
             <div>
               <label className="block text-sm font-medium mb-1">Desde</label>
-              <input type="date" value={format(startDate, "yyyy-MM-dd")} onChange={e => setStartDate(parseDateNoTz(e.target.value))} className="border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-tourism-teal" />
+              <input
+                type="date"
+                value={format(startDate, 'yyyy-MM-dd')}
+                onChange={e => { setStartDate(parseDateNoTz(e.target.value)); setWindowStart(parseDateNoTz(e.target.value)); }}
+                className="border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-tourism-teal"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Hasta</label>
-              <input type="date" value={format(endDate, "yyyy-MM-dd")} onChange={e => setEndDate(parseDateNoTz(e.target.value))} className="border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-tourism-teal" />
+              <input
+                type="date"
+                value={format(endDate, 'yyyy-MM-dd')}
+                onChange={e => setEndDate(parseDateNoTz(e.target.value))}
+                className="border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-tourism-teal"
+              />
             </div>
           </>
         )}
 
-        {/* Filtro de Ciudad */}
         <div>
           <label className="block text-sm font-medium mb-1">Ciudad</label>
           <div className="relative">
             <select
               value={ciudadFilter}
               onChange={e => setCiudadFilter(e.target.value)}
-              className="border rounded px-3 py-2 w-full appearance-none pr-8 outline-none focus:ring-2 focus:ring-tourism-teal"
+              className="border rounded px-3 py-2 appearance-none pr-8 outline-none focus:ring-2 focus:ring-tourism-teal"
             >
               <option value="">Todas las ciudades</option>
-              {ciudades.map(c => (
-                <option key={c} value={c as string}>{c}</option>
-              ))}
+              {cidadades.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <Filter className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
           </div>
@@ -447,130 +404,228 @@ const Availability: React.FC = () => {
 
         <div>
           <label className="block text-sm font-medium mb-1">Inmueble</label>
-          <select value={inmuebleId} onChange={e => setInmuebleId(e.target.value)} className="border rounded px-3 py-2 w-full outline-none focus:ring-2 focus:ring-tourism-teal">
+          <select
+            value={inmuebleId}
+            onChange={e => setInmuebleId(e.target.value)}
+            className="border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-tourism-teal"
+          >
             <option value="">Todos</option>
-            {inmuebles.map(i => (
-              <option key={i.id} value={i.id}>{i.nombre}</option>
-            ))}
+            {inmuebles.map(i => <option key={i.id} value={i.id}>{i.nombre}</option>)}
           </select>
         </div>
+
         <div>
           <label className="block text-sm font-medium mb-1">Estado</label>
-          <select value={estado} onChange={e => setEstado(e.target.value as any)} className="border rounded px-3 py-2 w-full outline-none focus:ring-2 focus:ring-tourism-teal">
+          <select
+            value={estado}
+            onChange={e => setEstado(e.target.value as any)}
+            className="border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-tourism-teal"
+          >
             <option value="todos">Todos</option>
             <option value="ocupado">Ocupado</option>
-            <option value="ocupado">Ocupado</option>
+            <option value="pendiente">Pendiente</option>
             <option value="disponible">Disponible</option>
             <option value="bloqueado">Bloqueado</option>
           </select>
         </div>
       </div>
 
-      {/* Leyenda */}
-      <div className="flex items-center gap-4 mb-4 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 bg-blue-500 rounded-sm"></span>
-          <span>Ocupado/Confirmado</span>
+      {/* ── Gantt Calendar ── */}
+      <div className="flex flex-col border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+
+        {/* Calendar toolbar: nav arrows + Today + month label */}
+        {/* Legend */}
+        <div className="flex items-center gap-4 px-4 py-2 text-sm text-black border-t border-gray-100 bg-gray-50 flex-wrap">
+          {Object.entries(ESTADO_LABEL).map(([key, label]) => (
+            <div key={key} className="flex items-center gap-1.5">
+              <span className={`w-3 h-3 rounded-sm ${ESTADO_COLORS[key]?.bg ?? 'bg-gray-300'}`} />
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 bg-yellow-400 rounded-sm"></span>
-          <span>Pendiente</span>
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 bg-gray-50">
+          <button onClick={() => navWeek(-1)} className="p-1.5 rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button onClick={goToday} className="text-sm font-medium text-gray-700 hover:text-[#1a9e8f] px-2 py-1 rounded hover:bg-gray-100 transition-colors">
+            Hoy
+          </button>
+          <button onClick={() => navWeek(1)} className="p-1.5 rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+          <span className="text-sm font-semibold text-gray-700 ml-1 capitalize">
+            {format(windowStart, 'MMMM yyyy', { locale: es })}
+            {!isSameMonth(windowStart, windowEnd) && ` — ${format(windowEnd, 'MMMM yyyy', { locale: es })}`}
+          </span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 bg-gray-100 border border-gray-300 rounded-sm"></span>
-          <span>Disponible</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-3 bg-gray-400 border border-gray-500 rounded-sm"></span>
-          <span>Bloqueado/Mantenimiento</span>
-        </div>
-      </div>
 
-      {/* Tabla tipo calendario */}
-      <div className="overflow-x-auto border rounded-lg">
-        <table className="min-w-full border-collapse">
-          <thead>
-            <tr>
-              <th className="px-3 py-2 border-b border-r border-gray-200 text-left bg-gray-50 sticky left-0 z-10 min-w-[200px]">Inmueble</th>
-              {fechas.map(date => (
-                <th key={date.toISOString()} className="px-2 py-2 border-b border-r border-gray-200 text-xs bg-gray-50 text-center min-w-[60px]">
-                  <div className="font-semibold">{format(date, "dd", { locale: es })}</div>
-                  <div className="text-gray-500 font-normal">{format(date, "MMM", { locale: es })}</div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={fechas.length + 1} className="text-center py-12 text-gray-500">Cargando disponibilidad...</td></tr>
-            ) : error ? (
-              <tr><td colSpan={fechas.length + 1} className="text-center text-red-500 py-12">{error}</td></tr>
-            ) : inmueblesFiltrados.length === 0 ? (
-              <tr><td colSpan={fechas.length + 1} className="text-center py-12 text-gray-500">No se encontraron inmuebles con los filtros seleccionados.</td></tr>
-            ) : (
-              inmueblesFiltrados.map(inmueble => (
-                <tr key={inmueble.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-3 border-b border-r border-gray-200 font-medium whitespace-nowrap bg-white sticky left-0 z-10 shadow-sm">
-                    {inmueble.nombre}
-                    {inmueble.ciudad && <div className="text-xs text-gray-400 font-normal">{inmueble.ciudad}</div>}
-                  </td>
-                  {fechas.map(date => {
-                    const reservaEnFecha = getReservaEnFecha(reservas, inmueble.id, date);
-                    const ocupado = !!reservaEnFecha;
+        {/* Sidebar + grid */}
+        <div className="flex overflow-hidden" style={{ maxHeight: '75vh' }}>
 
-                    // Si estamos filtrando disponible y está ocupado, mostrar vacío
-                    if (estado === "disponible" && ocupado) return <td key={date.toISOString()} className="border border-gray-200 bg-white"></td>;
-                    // Si estamos filtrando ocupado y no está ocupado
-                    if ((estado === "ocupado") && !ocupado) return <td key={date.toISOString()} className="border border-gray-200 bg-white"></td>;
+          {/* Left sidebar */}
+          <div className="flex-none flex flex-col border-r border-gray-200 bg-gray-50" style={{ width: SIDEBAR_W }}>
+            {/* Search */}
+            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50" style={{ height: 72, display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
+              <div className="relative w-full">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Busca el inmueble..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full pl-7 pr-2 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1a9e8f]"
+                />
+              </div>
+            </div>
+            {/* Property rows */}
+            <div className="flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="p-4 text-xs text-gray-400 text-center">Cargando...</div>
+              ) : error ? (
+                <div className="p-4 text-xs text-red-400 text-center">{error}</div>
+              ) : inmueblesFiltrados.length === 0 ? (
+                <div className="p-4 text-xs text-gray-400 text-center">Sin inmuebles</div>
+              ) : (
+                inmueblesFiltrados.map(inmueble => (
+                  <div
+                    key={inmueble.id}
+                    className="flex flex-col justify-center px-3 border-b border-gray-100 hover:bg-white transition-colors"
+                    style={{ height: ROW_H }}
+                  >
+                    <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{inmueble.nombre}</p>
+                    {inmueble.ciudad && (
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{inmueble.ciudad}</p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
 
-                    let cellClasses = "bg-gray-100 text-gray-400 hover:bg-gray-200";
+          {/* Scrollable date grid */}
+          <div className="flex-1 overflow-x-auto overflow-y-auto">
+            <div style={{ minWidth: fechas.length * CELL_W }}>
 
-                    if (ocupado && reservaEnFecha) {
-                      if (reservaEnFecha.estado === 'bloqueado') {
-                        cellClasses = "bg-gray-400 border-l-4 border-gray-500 text-gray-600 cursor-not-allowed flex flex-col justify-center items-center text-[10px] leading-tight";
-                      } else {
-                        const isPendiente = reservaEnFecha.estado === 'pendiente';
-                        const colors = getReservaColor(reservaEnFecha.id, isPendiente);
-                        cellClasses = `${colors.bg} ${colors.hover} ${colors.border} text-blue-800 cursor-pointer`;
-                      }
-                    }
-
+              {/* Date headers */}
+              <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+                {/* Month row */}
+                <div className="flex">
+                  {monthGroups.map(g => (
+                    <div
+                      key={g.month}
+                      style={{ width: g.dates.length * CELL_W }}
+                      className="text-xs font-bold text-gray-700 px-2 py-1 capitalize border-r border-gray-100 last:border-r-0"
+                    >
+                      {g.month}
+                    </div>
+                  ))}
+                </div>
+                {/* Day row */}
+                <div className="flex">
+                  {fechas.map((d, i) => {
+                    const isToday = i === todayColIndex;
                     return (
-                      <td
-                        key={date.toISOString()}
-                        className={`border border-gray-200 text-center transition-colors duration-200 h-12 p-1`}
+                      <div
+                        key={d.toISOString()}
+                        style={{ width: CELL_W, minWidth: CELL_W }}
+                        className={`flex flex-col items-center justify-center py-0 border-r border-gray-100 last:border-r-0 ${isToday ? 'bg-[#1a9e8f]' : ''}`}
                       >
-                        <div
-                          className={`w-full h-full rounded flex items-center justify-center ${cellClasses}`}
-                          title={ocupado ? (reservaEnFecha?.estado === 'bloqueado' ? `Bloqueo: ${reservaEnFecha.tipo_bloqueo} - ${reservaEnFecha.descripcion || ''}` : `Reserva ID: ${reservaEnFecha?.id} - ${reservaEnFecha?.estado}`) : "Disponible"}
-                          onClick={() => handleCellClick(reservaEnFecha)}
-                        >
-                          {ocupado && (
-                            reservaEnFecha?.estado === 'bloqueado' ?
-                              <><Lock className="h-3 w-3" />
-                                <span>{reservaEnFecha.id}</span></> :
-
-                              <span className="text-xs font-bold">●</span>
-
-                          )}
-                        </div>
-                      </td>
+                        <span className={`text-[10px] font-medium uppercase tracking-wide ${isToday ? 'text-white' : 'text-gray-400'}`}>
+                          {format(d, 'EEE', { locale: es }).replace('.', '')}
+                        </span>
+                        <span className={`text-sm font-bold ${isToday ? 'text-white' : 'text-gray-800'}`}>
+                          {format(d, 'd')}
+                        </span>
+                      </div>
                     );
                   })}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                </div>
+              </div>
+
+              {/* Grid rows with reservation bars */}
+              <div className="relative">
+                {!loading && !error && inmueblesFiltrados.map(inmueble => {
+                  const bars = getBarsForInmueble(inmueble.id);
+                  return (
+                    <div key={inmueble.id} className="flex relative border-b border-gray-200" style={{ height: ROW_H }}>
+                      {/* Background day cells */}
+                      {fechas.map((d, i) => (
+                        <div
+                          key={d.toISOString()}
+                          style={{ width: CELL_W, minWidth: CELL_W, height: ROW_H }}
+                          className={`flex-none border-r border-gray-200 last:border-r-0 ${i === todayColIndex ? 'bg-[#e8f8f5]' : ''}`}
+                        />
+                      ))}
+
+                      {/* Reservation bars */}
+                      {bars.map(({ reserva, colStart, colSpan }) => {
+                        const style = getEstadoStyle(reserva.estado);
+                        const estadoLabel = ESTADO_LABEL[reserva.estado ?? ''] ?? reserva.estado ?? '';
+                        const isBlock = reserva.estado === 'bloqueado';
+                        const guestName = reserva.huesped_nombre
+                          ? `${reserva.huesped_nombre}${reserva.huesped_apellido ? ' ' + reserva.huesped_apellido : ''}`
+                          : null;
+
+                        return (
+                          <div
+                            key={reserva.id}
+                            onClick={() => handleBarClick(reserva)}
+                            title={`${guestName ?? 'Bloqueo'} — ${estadoLabel}`}
+                            className={`absolute top-5 bottom-3 rounded-2xl h-7 py-1 cursor-pointer overflow-hidden flex items-center justify-end px-3 gap-5 shadow-md transition-all hover:brightness-90 active:scale-[0.99] ${style.bg} ${style.text}`}
+                            style={{
+                              left: colStart * CELL_W + 2,
+                              width: colSpan * CELL_W - 4,
+                            }}
+                          >
+                            {isBlock ? (
+                              <>
+                                <Lock className="w-3.5 h-3.5 flex-none opacity-80" />
+                                <span className="text-xs font-semibold truncate opacity-90">
+                                  {reserva.tipo_bloqueo ?? 'Bloqueado'}{reserva.descripcion ? ` — ${reserva.descripcion}` : ''}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                {/* Reservation ID badge — always shown */}
+                                <span className={`flex-none text-[11px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${style.badge} ${style.badgeText}`}>
+                                  RSV-{new Date().getFullYear()}-{reserva.id.padStart(3, '0')}
+                                </span>
+                                {guestName && (
+                                  <span className="text-sm font-bold truncate whitespace-nowrap tracking-tight">
+                                    {guestName.split(' ')[0]}
+                                  </span>
+                                )}
+                                {reserva.total_reserva != null && colSpan >= 3 && (
+                                  <span className="text-xs font-bold whitespace-nowrap opacity-90 ml-auto">
+                                    {formatCOP(reserva.total_reserva)}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+
+                {loading && <div className="flex items-center justify-center py-16 text-sm text-gray-400">Cargando disponibilidad...</div>}
+                {error && <div className="flex items-center justify-center py-16 text-sm text-red-400">{error}</div>}
+                {!loading && !error && inmueblesFiltrados.length === 0 && (
+                  <div className="flex items-center justify-center py-16 text-sm text-gray-400">No se encontraron inmuebles con los filtros seleccionados.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+
       </div>
 
-      {/* Modales */}
+      {/* ── Modales ── */}
       <CreateReservaModal
         open={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          setReservaError(null);
-        }}
+        onClose={() => { setIsCreateModalOpen(false); setReservaError(null); }}
         onCreate={handleCreateReserva}
         externalError={reservaError}
         initialData={isEditMode && selectedReservaDetail ? {
@@ -592,16 +647,9 @@ const Availability: React.FC = () => {
 
       <CreateBloqueoModal
         open={isCreateBloqueoModalOpen}
-        onClose={() => {
-          setIsCreateBloqueoModalOpen(false);
-          setSelectedBloqueo(undefined);
-          setIsEditBloqueoMode(false);
-        }}
+        onClose={() => { setIsCreateBloqueoModalOpen(false); setSelectedBloqueo(undefined); setIsEditBloqueoMode(false); }}
         onSuccess={handleCreateBloqueoSuccess}
-        onDeleteRequest={() => {
-          setIsCreateBloqueoModalOpen(false);
-          setConfirmDeleteModal(true);
-        }}
+        onDeleteRequest={() => { setIsCreateBloqueoModalOpen(false); setConfirmDeleteModal(true); }}
         initialData={selectedBloqueo}
         isEdit={isEditBloqueoMode}
       />
@@ -615,23 +663,18 @@ const Availability: React.FC = () => {
         />
       )}
 
-      {/* Modal de notificación de éxito */}
       {notifModal.open && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70]">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
             <CheckCircle className="h-14 w-14 text-green-500 mx-auto mb-4" />
             <p className="text-lg font-semibold text-gray-800 mb-5">{notifModal.message}</p>
-            <Button
-              className="bg-tourism-teal hover:bg-tourism-teal/80 text-white px-8"
-              onClick={() => setNotifModal({ open: false, message: '' })}
-            >
+            <Button className="bg-tourism-teal hover:bg-tourism-teal/80 text-white px-8" onClick={() => setNotifModal({ open: false, message: '' })}>
               Aceptar
             </Button>
           </div>
         </div>
       )}
 
-      {/* Modal de confirmación de eliminación */}
       {confirmDeleteModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[70]">
           <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4">
@@ -641,23 +684,12 @@ const Availability: React.FC = () => {
               <p className="text-sm text-gray-500 mt-1">Esta acción no se puede deshacer.</p>
             </div>
             <div className="flex gap-3 justify-center">
-              <Button
-                variant="outline"
-                onClick={() => setConfirmDeleteModal(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="bg-red-600 hover:bg-red-700 text-white"
-                onClick={handleConfirmDelete}
-              >
-                Sí, eliminar
-              </Button>
+              <Button variant="outline" onClick={() => setConfirmDeleteModal(false)}>Cancelar</Button>
+              <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={handleConfirmDelete}>Sí, eliminar</Button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

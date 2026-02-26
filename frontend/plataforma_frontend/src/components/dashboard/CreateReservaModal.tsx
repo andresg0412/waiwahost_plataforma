@@ -10,6 +10,8 @@ import { getPaises } from '../../auth/getPaises';
 import { getCiudadesByPais, getCiudades } from '../../auth/getCiudadPais';
 import { IPais } from '../../interfaces/Pais';
 import { ICiudad } from '../../interfaces/Ciudad';
+import { getHuespedesApi, getHuespedDetalleApi } from '../../auth/huespedesApi';
+import { IHuespedTableData } from '../../interfaces/Huesped';
 
 interface CreateReservaModalProps {
   open: boolean;
@@ -65,6 +67,29 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
   const [paises, setPaises] = useState<IPais[]>([]);
   const [ciudadesByPais, setCiudadesByPais] = useState<Record<number, ICiudad[]>>({});
   const [loadingPaises, setLoadingPaises] = useState(false);
+  const [guestOptions, setGuestOptions] = useState<IHuespedTableData[]>([]);
+  const [guestSearchQueries, setGuestSearchQueries] = useState<Record<number, string>>({});
+  const [showGuestDropdown, setShowGuestDropdown] = useState<Record<number, boolean>>({});
+
+  const handleGuestSearchChange = (index: number, query: string) => {
+    setGuestSearchQueries((prev: Record<number, string>) => ({ ...prev, [index]: query }));
+    setShowGuestDropdown((prev: Record<number, boolean>) => ({ ...prev, [index]: true }));
+  };
+
+  const toggleGuestDropdown = (index: number, show: boolean) => {
+    setShowGuestDropdown((prev: Record<number, boolean>) => ({ ...prev, [index]: show }));
+  };
+
+  const getFilteredGuests = (index: number) => {
+    const query = guestSearchQueries[index] || '';
+    if (!query) return guestOptions;
+    const lowerQuery = query.toLowerCase();
+    return guestOptions.filter((g: IHuespedTableData) =>
+      (g.nombre?.toLowerCase() || '').includes(lowerQuery) ||
+      (g.apellido?.toLowerCase() || '').includes(lowerQuery) ||
+      (g.documento_numero || '').includes(lowerQuery)
+    ).slice(0, 5); // Limit to 5 results for clean UI
+  };
 
   // Helper para verificar si un huésped tiene todos los datos completos
   const isGuestComplete = (huesped: IHuespedForm): boolean => {
@@ -99,7 +124,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
   };
 
   const clearHuespedFields = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev: IReservaForm) => ({
       ...prev,
       huespedes: prev.huespedes.map((h: IHuespedForm, i: number) =>
         i === index
@@ -130,7 +155,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
         clearHuespedFields(index);
       }
     }
-    setExpandedGuest(prev => (prev === index ? -1 : index));
+    setExpandedGuest((prev: number) => (prev === index ? -1 : index));
   };
 
   // Función para cargar inmuebles desde la API
@@ -169,10 +194,81 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
     if (!paisId || ciudadesByPais[paisId]) return;
     try {
       const data = await getCiudadesByPais(paisId);
-      setCiudadesByPais(prev => ({ ...prev, [paisId]: data }));
+      setCiudadesByPais((prev: Record<number, ICiudad[]>) => ({ ...prev, [paisId]: data }));
     } catch (error) {
       console.error('❌ Error cargando ciudades:', error);
     }
+  };
+
+  const loadGuestOptions = async () => {
+    try {
+      const g = await getHuespedesApi();
+      const validGuests = g.filter((guest: IHuespedTableData) => {
+        const nombre = (guest.nombre || '').trim().toLowerCase();
+        const apellido = (guest.apellido || '').trim().toLowerCase();
+
+        if (!nombre || nombre === 'sin nombre' || nombre === 'null') return false;
+        if (!apellido || apellido === 'sin apellido' || apellido === 'null') return false;
+
+        return true;
+      });
+      setGuestOptions(validGuests);
+    } catch (e) {
+      console.error('Error loading guests', e);
+    }
+  };
+
+  const handleSelectGuest = async (id: number, index: number = 0) => {
+    try {
+      const detalle = await getHuespedDetalleApi(id);
+      if (detalle) {
+        setFormData((prev: IReservaForm) => {
+          const newHuespedes = [...prev.huespedes];
+          newHuespedes[index] = {
+            ...newHuespedes[index],
+            nombre: detalle.nombre || '',
+            apellido: detalle.apellido || '',
+            email: detalle.email || '',
+            telefono: detalle.telefono || '',
+            documento_tipo: detalle.documento_tipo as any || 'cedula',
+            documento_numero: detalle.documento_numero || '',
+            fecha_nacimiento: detalle.fecha_nacimiento?.split('T')[0] || '',
+            motivo: index === 0 ? detalle.motivo || '' : newHuespedes[index].motivo,
+            ciudad_residencia: detalle.ciudad_residencia || '',
+            ciudad_procedencia: detalle.ciudad_procedencia || '',
+            pais_residencia: detalle.pais_residencia?.toString() || '',
+            pais_procedencia: detalle.pais_procedencia?.toString() || '',
+          };
+          return { ...prev, huespedes: newHuespedes };
+        });
+
+        if (detalle.pais_residencia) fetchCiudades(Number(detalle.pais_residencia));
+        if (detalle.pais_procedencia) fetchCiudades(Number(detalle.pais_procedencia));
+      }
+    } catch (error) {
+      console.error('Error fetching guest details', error);
+    }
+  };
+
+  const clearGuest = (index: number = 0) => {
+    setFormData((prev) => {
+      const newHuespedes = [...prev.huespedes];
+      newHuespedes[index] = {
+        nombre: '',
+        apellido: '',
+        email: '',
+        telefono: '',
+        documento_tipo: 'cedula',
+        documento_numero: '',
+        fecha_nacimiento: '',
+        es_principal: index === 0,
+        motivo: newHuespedes[index].motivo || '',
+        ciudad_residencia: '',
+        ciudad_procedencia: '',
+      };
+      return { ...prev, huespedes: newHuespedes };
+    });
+    setGuestSearchQueries((prev: Record<number, string>) => ({ ...prev, [index]: '' }));
   };
 
   useEffect(() => {
@@ -180,6 +276,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
       // Cargar inmuebles y países cuando se abre el modal
       loadInmuebles();
       loadPaises();
+      loadGuestOptions();
 
       if (initialData) {
         // Helper para transformar fecha ISO a YYYY-MM-DD
@@ -491,7 +588,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
   };
 
   const handleHuespedChange = (index: number, field: keyof IHuespedForm, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev: IReservaForm) => ({
       ...prev,
       huespedes: prev.huespedes.map((huesped: IHuespedForm, i: number) =>
         i === index ? { ...huesped, [field]: value } : huesped
@@ -639,16 +736,21 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
                 <p className="text-red-500 text-xs mt-1">{errors.numero_huespedes}</p>
               )}
             </div>
+
+
             {/* Sección de Huéspedes Dinámicos */}
             <div className="col-span-2">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Información de Huéspedes
               </h3>
+
+
+
               {errors.huespedes && (
                 <p className="text-red-500 text-sm mb-4">{errors.huespedes}</p>
               )}
 
-              {formData.huespedes.map((huesped, index) => {
+              {formData.huespedes.map((huesped: IHuespedForm, index: number) => {
                 const isComplete = isGuestComplete(huesped);
                 const isExpanded = expandedGuest === index;
 
@@ -678,6 +780,56 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
 
                     {isExpanded && (
                       <div className="p-4 border-t border-gray-200 bg-white">
+                        {(
+                          <div className="mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Buscar huésped recurrente
+                            </label>
+                            <div className="flex gap-4 items-center">
+                              <div className="relative w-full z-50">
+                                <input
+                                  type="text"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal"
+                                  placeholder="Buscar por nombre, apellido o documento..."
+                                  value={guestSearchQueries[index] !== undefined ? guestSearchQueries[index] : (huesped.documento_numero ? `${huesped.nombre} ${huesped.apellido}` : '')}
+                                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleGuestSearchChange(index, e.target.value)}
+                                  onFocus={() => toggleGuestDropdown(index, true)}
+                                  onBlur={() => setTimeout(() => toggleGuestDropdown(index, false), 200)}
+                                />
+                                {showGuestDropdown[index] && (
+                                  <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                    <li
+                                      className="px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 cursor-pointer shadow-sm border-b"
+                                      onClick={() => {
+                                        clearGuest(index);
+                                        toggleGuestDropdown(index, false);
+                                      }}
+                                    >
+                                      Nuevo huésped (Limpiar datos)
+                                    </li>
+                                    {getFilteredGuests(index).map((guest: IHuespedTableData) => (
+                                      <li
+                                        key={guest.id_huesped}
+                                        className="px-3 py-2 text-sm text-gray-800 hover:bg-gray-100 cursor-pointer flex justify-between"
+                                        onClick={() => {
+                                          handleSelectGuest(guest.id_huesped, index);
+                                          setGuestSearchQueries((prev: Record<number, string>) => ({ ...prev, [index]: `${guest.nombre} ${guest.apellido}` }));
+                                          toggleGuestDropdown(index, false);
+                                        }}
+                                      >
+                                        <span className="font-medium">{guest.nombre} {guest.apellido}</span>
+                                        <span className="text-gray-500 text-xs mt-1">Documento: {guest.documento_numero}</span>
+                                      </li>
+                                    ))}
+                                    {getFilteredGuests(index).length === 0 && (
+                                      <li className="px-3 py-2 text-sm text-gray-500">No se encontraron huéspedes.</li>
+                                    )}
+                                  </ul>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -725,7 +877,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
                             <PhoneInput
                               label="Teléfono"
                               value={huesped.telefono || ''}
-                              onChange={(value) => handleHuespedChange(index, 'telefono', value)}
+                              onChange={(value: string | undefined) => handleHuespedChange(index, 'telefono', value || '')}
                               onFocus={() => clearIfPlaceholder(index, 'telefono')}
                               placeholder="300 123 4567"
                             />
@@ -737,7 +889,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
                             </label>
                             <select
                               value={huesped.documento_tipo}
-                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleHuespedChange(index, 'documento_tipo', e.target.value as IHuespedForm['documento_tipo'])}
+                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleHuespedChange(index, 'documento_tipo', e.target.value)}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal"
                             >
                               <option value="cedula">Cédula</option>
@@ -1023,8 +1175,8 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
             </Button>
           </div>
         </form>
-      </div >
-    </div >
+      </div>
+    </div>
   );
 };
 

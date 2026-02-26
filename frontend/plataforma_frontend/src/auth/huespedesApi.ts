@@ -6,7 +6,7 @@ export const getHuespedesApi = async (id_empresa?: number): Promise<IHuespedTabl
   try {
     const url = id_empresa
       ? `/api/huespedes/getHuespedes?id_empresa=${id_empresa}`
-      : '/api/huespedes';
+      : '/api/huespedes/getHuespedes';
 
     const data = await apiFetch(url, {
       method: 'GET',

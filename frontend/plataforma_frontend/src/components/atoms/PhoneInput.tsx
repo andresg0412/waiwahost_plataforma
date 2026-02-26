@@ -80,7 +80,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
                     value={selectedCountry.code}
                     onChange={handleCountryChange}
                     disabled={disabled}
-                    className="flex-shrink-0 z-10 inline-flex items-center py-2.5 px-3 text-sm font-medium text-gray-900 bg-gray-100 border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700 dark:text-white dark:border-gray-600 border-e-0 w-[140px]"
+                    className="flex-shrink-0 inline-flex items-center py-2.5 px-3 text-sm font-medium text-gray-900 bg-gray-100 border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700 dark:text-white dark:border-gray-600 border-e-0 w-[140px]"
                 >
                     {COUNTRIES.map((country) => (
                         <option key={country.code} value={country.code}>
@@ -95,7 +95,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
                         onChange={handlePhoneChange}
                         onFocus={onFocus}
                         disabled={disabled}
-                        className={`block p-2.5 w-full z-20 text-sm text-gray-900 bg-white rounded-e-lg border-s-0 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-s-gray-700  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
+                        className={`block p-2.5 w-full text-sm text-gray-900 bg-white rounded-e-lg border-s-0 border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-s-gray-700  dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-blue-500 ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''
                             }`}
                         placeholder={placeholder}
                     />

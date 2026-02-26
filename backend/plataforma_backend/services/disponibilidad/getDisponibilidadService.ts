@@ -36,7 +36,10 @@ export async function getDisponibilidad(params: DisponibilidadParams) {
         inmuebleId: String(r.inmuebleid),
         start: r.start,
         end: r.end,
-        estado: r.estado
+        estado: r.estado,
+        total_reserva: r.total_reserva ? Number(r.total_reserva) : null,
+        huesped_nombre: r.huesped_nombre || null,
+        huesped_apellido: r.huesped_apellido || null,
       })),
       ...bloqueos.map((b: any) => ({
         id: `blk-${b.id}`,

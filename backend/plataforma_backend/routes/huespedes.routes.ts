@@ -4,4 +4,8 @@ import { authMiddleware } from '../middlewares/authMiddleware';
 
 export async function huespedesRoutes(fastify: FastifyInstance) {
     fastify.get('/', { preHandler: [authMiddleware] }, huespedesController.getHuespedes);
+
+    fastify.get('/selector', { preHandler: [authMiddleware] }, huespedesController.getHuespedesSelector);
+
+    fastify.get('/:id', { preHandler: [authMiddleware] }, huespedesController.getHuespedById);
 }

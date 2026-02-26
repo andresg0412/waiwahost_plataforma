@@ -4,6 +4,8 @@ import { GetReservasService } from './getReservasService';
 import { HuespedesService } from './huespedesService';
 import { BloqueosRepository } from '../../repositories/bloqueos.repository';
 import { PLATAFORMA_DEFAULT, isPlataformaValida } from '../../constants/plataformas';
+import { PagosRepository } from '../../repositories/pagos.repository';
+import { PagoMovimientoService } from '../pagoMovimiento.service';
 
 export class CreateReservaService {
   private reservasRepository: ReservasRepository;
@@ -171,6 +173,38 @@ export class CreateReservaService {
 
       if (!reservaCreada) {
         throw new Error('Error al recuperar la reserva creada');
+      }
+
+      // 7. Si se especificó un total_pagado > 0, crear el pago automáticamente
+      if (totalPagado > 0) {
+        try {
+          const pagoData = {
+            id_reserva: nuevaReserva.id,
+            monto: totalPagado,
+            metodo_pago: (requestData as any).metodo_pago_inicial || 'efectivo',
+            concepto: 'Pago de reserva',
+            descripcion: `Abono inicial registrado al crear la reserva ${reservaCreada.codigo_reserva}`,
+            fecha_pago: new Date().toISOString().split('T')[0],
+            id_empresa: requestData.id_empresa,
+          };
+
+          const pagoCreado = await PagosRepository.createPago(pagoData);
+
+          // Intentar crear el movimiento contable asociado (no falla si esto error)
+          try {
+            const idInmueble = await PagoMovimientoService.obtenerInmuebleDeReserva(nuevaReserva.id);
+            if (idInmueble) {
+              await PagoMovimientoService.crearMovimientoDesdePago(pagoCreado, idInmueble);
+            }
+          } catch (movError) {
+            console.warn('[createReservaService] No se pudo crear el movimiento contable del pago inicial:', movError);
+          }
+
+          console.log(`[createReservaService] Pago inicial creado: $${totalPagado} para reserva ${reservaCreada.codigo_reserva}`);
+        } catch (pagoError) {
+          // El pago falla de forma silenciosa: la reserva ya fue creada
+          console.error('[createReservaService] Error al crear pago inicial (la reserva fue creada ok):', pagoError);
+        }
       }
 
       return reservaCreada;

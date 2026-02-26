@@ -28,6 +28,9 @@ export interface HuespedPrincipal {
   apellido: string;
   email?: string;
   telefono?: string;
+  documento_tipo?: string;
+  documento_numero?: string;
+  fecha_nacimiento?: string;
   ciudadResidencia?: string,
   ciudadProcedencia?: string,
   motivo?: string
@@ -111,6 +114,8 @@ export interface CreateReservaRequest {
   id_empresa: number;
   // Campo de plataforma de origen (opcional)
   plataforma_origen?: string;
+  // Si total_pagado > 0, método de pago del abono inicial (default: 'efectivo')
+  metodo_pago_inicial?: 'efectivo' | 'transferencia' | 'tarjeta' | 'otro';
 }
 
 export interface CreateReservaResponse {

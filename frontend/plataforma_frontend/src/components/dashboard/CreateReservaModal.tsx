@@ -57,6 +57,7 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
     observaciones: '',
     id_empresa: 1, // Por ahora hardcodeado
     plataforma_origen: 'directa', // Valor por defecto
+    metodo_pago_inicial: 'efectivo', // Método de pago del abono inicial
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof IReservaForm, string>>>({});
@@ -1120,6 +1121,39 @@ const CreateReservaModal: React.FC<CreateReservaModalProps> = ({
                 Monto que el huésped ha pagado como abono
               </p>
             </div>
+
+            {/* Método de pago del abono inicial — se muestra solo si total_pagado > 0 */}
+            {formData.total_pagado > 0 && (
+              <div className="col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  Se creará un pago automático de{' '}
+                  <span className="font-bold">
+                    ${new Intl.NumberFormat('es-CO').format(formData.total_pagado)}
+                  </span>
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-blue-700 mb-1">
+                    Método de Pago del Abono *
+                  </label>
+                  <select
+                    value={formData.metodo_pago_inicial || 'efectivo'}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      handleInputChange('metodo_pago_inicial', e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white text-sm"
+                  >
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia Bancaria</option>
+                    <option value="tarjeta">Tarjeta de Crédito/Débito</option>
+                    <option value="otro">Otro</option>
+                  </select>
+                  <p className="text-xs text-blue-600 mt-1">
+                    El pago quedará registrado automáticamente al crear la reserva.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

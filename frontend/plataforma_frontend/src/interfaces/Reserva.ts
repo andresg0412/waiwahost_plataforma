@@ -76,6 +76,8 @@ export interface IReservaForm {
   observaciones?: string;
   id_empresa: number;
   plataforma_origen?: PlataformaOrigen;
+  // Si total_pagado > 0, método de pago del abono inicial (default: 'efectivo')
+  metodo_pago_inicial?: 'efectivo' | 'transferencia' | 'tarjeta' | 'otro';
 }
 
 export interface IReservaTableData extends IReserva {

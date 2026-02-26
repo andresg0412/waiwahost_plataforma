@@ -317,9 +317,21 @@ const CheckinFormContent = () => {
         );
     };
 
+    // Verifica si un acompañante tiene todos sus campos obligatorios llenos
+    const isCompanionComplete = (huesped) => {
+        return Boolean(
+            huesped.nombre && huesped.nombre.trim() &&
+            huesped.apellido && huesped.apellido.trim() &&
+            huesped.email && huesped.email.trim() &&
+            huesped.telefono && huesped.telefono.trim() &&
+            huesped.documento_numero && huesped.documento_numero.trim() &&
+            huesped.fecha_nacimiento
+        );
+    };
+
     const isGuestComplete = (huesped, index) => {
         if (index === 0) return isPrincipalComplete(huesped);
-        return hasHuespedData(huesped);
+        return isCompanionComplete(huesped);
     };
 
     const toggleGuest = (index) => {
@@ -717,8 +729,11 @@ const CheckinFormContent = () => {
                                                     {index > 0 && isEmpty && (
                                                         <span className="text-xs text-gray-400">{t.optional}</span>
                                                     )}
-                                                    {index > 0 && !isEmpty && (
+                                                    {index > 0 && !isEmpty && isComplete && (
                                                         <span className="text-xs text-green-600">{t.withData}</span>
+                                                    )}
+                                                    {index > 0 && !isEmpty && !isComplete && (
+                                                        <span className="text-xs text-orange-500">{t.missingFields}</span>
                                                     )}
                                                 </div>
                                             </div>

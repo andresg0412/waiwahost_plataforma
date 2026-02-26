@@ -29,7 +29,8 @@ export const CHECKIN_I18N = {
         principalGuest: 'Huésped Principal',
         companionGuest: 'Huésped Acompañante',
         required: 'Obligatorio',
-        optional: 'Opcional — sin datos',
+        optional: 'Obligatorio — sin datos',
+        missingFields: 'Faltan campos por llenar',
         withData: 'Con datos',
 
         // ---------- Campos de huésped ----------
@@ -130,7 +131,8 @@ export const CHECKIN_I18N = {
         principalGuest: 'Primary Guest',
         companionGuest: 'Additional Guest',
         required: 'Required',
-        optional: 'Optional — no data',
+        optional: 'Required — no data',
+        missingFields: 'Missing fields to fill',
         withData: 'With data',
 
         // ---------- Campos de huésped ----------

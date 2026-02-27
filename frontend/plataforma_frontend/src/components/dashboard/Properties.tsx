@@ -140,7 +140,7 @@ const Properties: React.FC = () => {
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">Gestión de Propiedades</h2>
+        <h2 className="text-xl font-bold">Propiedades</h2>
         <CreatePropertyButton
           onClick={() => canCreate && setModalOpen(true)}
           disabled={!canCreate}

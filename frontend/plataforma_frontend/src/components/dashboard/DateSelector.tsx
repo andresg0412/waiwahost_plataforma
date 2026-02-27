@@ -22,11 +22,11 @@ const DateSelector: React.FC<DateSelectorProps> = ({ selectedDate, onDateChange 
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+    <div className="rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 p-4 mb-6">
       <div className="flex flex-col sm:flex-row md:flex-row space-y-3 md:space-y-0 items-center justify-between">
         <div className="flex items-center gap-3">
-          <Calendar className="h-5 w-5 text-tourism-navy" />
-          <h3 className="text-lg font-semibold text-tourism-navy">
+          <Calendar className="h-5 w-5 text-tourism-navy dark:text-white" />
+          <h3 className="text-lg font-semibold text-tourism-navy dark:text-white">
             Caja del día
           </h3>
         </div>
@@ -41,14 +41,14 @@ const DateSelector: React.FC<DateSelectorProps> = ({ selectedDate, onDateChange 
           </button>
           
           <div className="flex flex-col items-center min-w-[200px]">
-            <span className="text-sm font-medium text-tourism-navy capitalize">
+            <span className="text-sm font-medium text-tourism-navy capitalize dark:text-white">
               {formatDateForDisplay(selectedDate)}
             </span>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => onDateChange(e.target.value)}
-              className="mt-1 text-xs text-gray-500 border-none bg-transparent cursor-pointer"
+              className="mt-1 text-xs text-gray-500 border-none bg-transparent cursor-pointer dark:text-white"
             />
           </div>
           

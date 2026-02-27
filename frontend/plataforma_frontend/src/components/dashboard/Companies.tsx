@@ -122,10 +122,10 @@ const Companies: React.FC = () => {
     };
 
     return (
-        <div className="p-6 bg-white rounded-lg shadow-md">
+        <div className="p-6 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h2 className="text-2xl font-bold">Gestión de Empresas</h2>
+                    <h2 className="text-2xl font-bold">Empresas</h2>
                     <p className="text-gray-500 text-sm">Administración centralizada de todas las empresas en la plataforma.</p>
                 </div>
                 <Button

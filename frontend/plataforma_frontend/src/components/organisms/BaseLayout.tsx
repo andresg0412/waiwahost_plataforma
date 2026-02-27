@@ -62,14 +62,14 @@ const BaseLayout: React.FC = () => {
     <div className="flex min-h-screen bg-white text-foreground max-w-full overflow-hidden">
       {/* Sidebar a la izquierda, ocupa toda la altura */}
       <aside className={`${open ? "translate-x-0 w-64" : "-translate-x-full w-0"} 
-    transition-all duration-300 ease-in-out md:relative flex-shrink-0 border-r border-gray-200 bg-gradient-to-br 
-    from-tourism-navy via-tourism-teal to-tourism-sage shadow-md flex flex-col rounded-tr-2xl rounded-br-2xl overflow-hidden`}>
+    transition-all duration-300 ease-in-out sticky top-0 h-screen flex-shrink-0 border-r border-gray-200 bg-gradient-to-br 
+    from-waiwa-forest via-[#0f5245] to-[#1a6b58] shadow-md flex flex-col rounded-tr-2xl rounded-br-2xl overflow-y-auto overflow-x-hidden`}>
         <div className="border-b border-gray-200 bg-white px-3 py-4 flex items-center space-x-3">
-          <div className="bg-tourism-gold p-2 rounded-lg">
+          <div className="bg-[#e7b61d] p-2 rounded-lg">
             <Logo />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-tourism-navy">Waiwahost</h1>
+            <h1 className="font-bold text-lg text-waiwa-forest">Waiwahost</h1>
             <p className="text-xs text-gray-500">Gestión Inmobiliaria</p>
           </div>
 
@@ -83,9 +83,9 @@ const BaseLayout: React.FC = () => {
         </div>
       </aside>
       {/* Área derecha: header arriba, content abajo */}
-      <div className="flex flex-col flex-1 min-h-screen bg-white min-w-0">
+      <div className="flex flex-col flex-1 h-screen overflow-hidden bg-white min-w-0">
         {/* Header solo sobre el content, no sobre el sidebar */}
-        <header className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+        <header className="flex-none w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-40">
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center space-x-4">
               <button
@@ -110,24 +110,23 @@ const BaseLayout: React.FC = () => {
             </div>
           </div>
         </header>
-        {/* Main content debajo del header */}
-        <main className="flex-1 p-8 bg-white min-h-[calc(100vh-4rem)] overflow-hidden">
-          <div className="w-full h-full overflow-auto">
+        <main className="flex-1 overflow-y-auto p-8 bg-white">
+          <div className="w-full">
             {COMPONENTS[activeKey]}
           </div>
         </main>
         {/* Footer adaptado visualmente */}
-        <footer className="border-t border-gray-200 bg-white px-6 py-4">
+        <footer className="flex-none w-full border-t border-gray-200 bg-white px-6 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-600">
             <div className="flex items-center space-x-4">
               <span>© 2025 Waiwahost. Todos los derechos reservados.</span>
             </div>
             <div className="flex items-center space-x-4 mt-2 sm:mt-0">
-              <a href="#" className="hover:text-tourism-navy transition-colors">Política de Privacidad</a>
+              <a href="#" className="hover:text-waiwa-forest transition-colors">Política de Privacidad</a>
               <span>•</span>
-              <a href="#" className="hover:text-tourism-navy transition-colors">Términos de Servicio</a>
+              <a href="#" className="hover:text-waiwa-forest transition-colors">Términos de Servicio</a>
               <span>•</span>
-              <a href="#" className="hover:text-tourism-navy transition-colors">Soporte</a>
+              <a href="#" className="hover:text-waiwa-forest transition-colors">Soporte</a>
             </div>
           </div>
         </footer>

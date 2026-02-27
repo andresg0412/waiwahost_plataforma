@@ -14,39 +14,41 @@ body {
 
 @layer base {
   :root {
+    /* Waiwa brand: forest #0c4136, amber #e7b61d, lime #d7f313 */
+    /* rust #b76a07, ochre #b48000, sky #b1c1e4, mauve #a197ad   */
     --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --foreground: 160 64% 14%;        /* forest-tinted dark text */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 160 64% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
+    --popover-foreground: 160 64% 14%;
+    --primary: 160 64% 14%;          /* waiwa-forest #0c4136 */
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --secondary: 215 38% 80%;        /* waiwa-sky #b1c1e4 */
+    --secondary-foreground: 160 64% 14%;
+    --muted: 215 38% 92%;
+    --muted-foreground: 270 10% 62%; /* waiwa-mauve #a197ad */
+    --accent: 44 83% 63%;            /* waiwa-amber #e7b61d */
+    --accent-foreground: 160 64% 14%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border: 215 20% 88%;
+    --input: 215 20% 88%;
+    --ring: 44 83% 63%;              /* amber ring on focus */
+    --chart-1: 160 64% 14%;         /* forest */
+    --chart-2: 44 83% 63%;          /* amber */
+    --chart-3: 73 97% 52%;          /* lime */
+    --chart-4: 28 93% 38%;          /* rust */
+    --chart-5: 270 10% 62%;         /* mauve */
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 160 64% 14%;  /* forest */
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 44 83% 63%;       /* amber */
+    --sidebar-primary-foreground: 160 64% 14%;
+    --sidebar-accent: 160 50% 20%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 160 40% 22%;
+    --sidebar-ring: 44 83% 63%;
   }
   .dark {
     --background: 0 0% 3.9%;

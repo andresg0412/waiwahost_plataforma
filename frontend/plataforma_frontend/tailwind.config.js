@@ -17,12 +17,23 @@ module.exports = {
     },
     extend: {
       colors: {
-        "tourism-navy": "#1e3a5f",
-        "tourism-teal": "#2d7d7d",
-        "tourism-sage": "#6b8e6b",
-        "tourism-gold": "#d4a574",
-        "tourism-cream": "#f7f5f3",
-        "tourism-slate": "#4a5568",
+        // ── Waiwa Brand Palette ───────────────────────────────────────
+        // #a197ad mauve  | #b1c1e4 sky    | #b76a07 rust
+        // #b48000 ochre  | #e7b61d amber  | #d7f313 lime  | #0c4136 forest
+        "waiwa-forest": "#0c4136",   // primary dark – headers, sidebar, CTAs
+        "waiwa-amber": "#e7b61d",   // primary accent – badges, highlights
+        "waiwa-lime": "#d7f313",   // secondary accent – today indicators
+        "waiwa-rust": "#b76a07",   // warm accent – pending states
+        "waiwa-ochre": "#b48000",   // warm mid – secondary action
+        "waiwa-sky": "#b1c1e4",   // light blue – backgrounds, tags
+        "waiwa-mauve": "#a197ad",   // muted – disabled, blocked
+        // ── Backward-compat aliases (old token names → brand colors) ──
+        "tourism-navy": "#0c4136",
+        "tourism-teal": "#0c4136",
+        "tourism-sage": "#a197ad",
+        "tourism-gold": "#e7b61d",
+        "tourism-cream": "#f5f4f0",
+        "tourism-slate": "#a197ad",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

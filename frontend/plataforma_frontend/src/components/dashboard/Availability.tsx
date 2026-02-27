@@ -80,10 +80,12 @@ const periodosFijos = [
   { label: "2 meses", days: 60 },
 ];
 
+// Paleta corporativa Waiwa
+// #0A3D2A verde oscuro | #E8A000 ámbar | #9B91A0 mauve | #C8E600 lima | #7A3B00 naranja oscuro | #6B4E00 dorado | #B3BBCF azul pálido
 const ESTADO_COLORS: Record<string, { bg: string; text: string; badge: string; badgeText: string }> = {
-  confirmada: { bg: 'bg-[#1e3a8a]', text: 'text-white', badge: 'bg-white/20', badgeText: 'text-white' },
-  pendiente: { bg: 'bg-[#a16207]', text: 'text-white', badge: 'bg-white/25', badgeText: 'text-white' },
-  bloqueado: { bg: 'bg-[#6b7280]', text: 'text-slate-200', badge: 'bg-black/20', badgeText: 'text-slate-300' },
+  confirmada: { bg: 'bg-[#0A3D2A]', text: 'text-white', badge: 'bg-white/20', badgeText: 'text-white' },
+  pendiente: { bg: 'bg-[#E8A000]', text: 'text-[#0A3D2A]', badge: 'bg-black/15', badgeText: 'text-[#0A3D2A]' },
+  bloqueado: { bg: 'bg-[#9B91A0]', text: 'text-white', badge: 'bg-black/15', badgeText: 'text-white' },
 };
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -431,7 +433,7 @@ const Availability: React.FC = () => {
       </div>
 
       {/* ── Gantt Calendar ── */}
-      <div className="flex flex-col border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="flex flex-col border border-gray-200 rounded-xl shadow-sm">
 
         {/* Calendar toolbar: nav arrows + Today + month label */}
         {/* Legend */}
@@ -447,7 +449,7 @@ const Availability: React.FC = () => {
           <button onClick={() => navWeek(-1)} className="p-1.5 rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button onClick={goToday} className="text-sm font-medium text-gray-700 hover:text-[#1a9e8f] px-2 py-1 rounded hover:bg-gray-100 transition-colors">
+          <button onClick={goToday} className="text-sm font-medium text-gray-700 hover:text-waiwa-forest px-2 py-1 rounded hover:bg-gray-100 transition-colors">
             Hoy
           </button>
           <button onClick={() => navWeek(1)} className="p-1.5 rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
@@ -460,7 +462,7 @@ const Availability: React.FC = () => {
         </div>
 
         {/* Sidebar + grid */}
-        <div className="flex overflow-hidden" style={{ maxHeight: '75vh' }}>
+        <div className="flex overflow-x-hidden">
 
           {/* Left sidebar */}
           <div className="flex-none flex flex-col border-r border-gray-200 bg-gray-50" style={{ width: SIDEBAR_W }}>
@@ -473,12 +475,12 @@ const Availability: React.FC = () => {
                   placeholder="Busca el inmueble..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full pl-7 pr-2 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-[#1a9e8f]"
+                  className="w-full pl-7 pr-2 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-waiwa-amber"
                 />
               </div>
             </div>
             {/* Property rows */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1">
               {loading ? (
                 <div className="p-4 text-xs text-gray-400 text-center">Cargando...</div>
               ) : error ? (
@@ -503,7 +505,7 @@ const Availability: React.FC = () => {
           </div>
 
           {/* Scrollable date grid */}
-          <div className="flex-1 overflow-x-auto overflow-y-auto">
+          <div className="flex-1 overflow-x-auto">
             <div style={{ minWidth: fechas.length * CELL_W }}>
 
               {/* Date headers */}
@@ -528,7 +530,7 @@ const Availability: React.FC = () => {
                       <div
                         key={d.toISOString()}
                         style={{ width: CELL_W, minWidth: CELL_W }}
-                        className={`flex flex-col items-center justify-center py-0 border-r border-gray-100 last:border-r-0 ${isToday ? 'bg-[#1a9e8f]' : ''}`}
+                        className={`flex flex-col items-center justify-center py-0 border-r border-gray-100 last:border-r-0 ${isToday ? 'bg-[#0A3D2A]' : ''}`}
                       >
                         <span className={`text-[10px] font-medium uppercase tracking-wide ${isToday ? 'text-white' : 'text-gray-400'}`}>
                           {format(d, 'EEE', { locale: es }).replace('.', '')}
@@ -553,7 +555,7 @@ const Availability: React.FC = () => {
                         <div
                           key={d.toISOString()}
                           style={{ width: CELL_W, minWidth: CELL_W, height: ROW_H }}
-                          className={`flex-none border-r border-gray-200 last:border-r-0 ${i === todayColIndex ? 'bg-[#e8f8f5]' : ''}`}
+                          className={`flex-none border-r border-gray-200 last:border-r-0 ${i === todayColIndex ? 'bg-[#C8E600]/15' : ''}`}
                         />
                       ))}
 
@@ -571,7 +573,7 @@ const Availability: React.FC = () => {
                             key={reserva.id}
                             onClick={() => handleBarClick(reserva)}
                             title={`${guestName ?? 'Bloqueo'} — ${estadoLabel}`}
-                            className={`absolute top-5 bottom-3 rounded-2xl h-7 py-1 cursor-pointer overflow-hidden flex items-center justify-end px-3 gap-5 shadow-md transition-all hover:brightness-90 active:scale-[0.99] ${style.bg} ${style.text}`}
+                            className={`absolute top-5 bottom-3 rounded-2xl h-7 py-1 cursor-pointer flex items-center justify-end px-3 gap-5 shadow-md transition-all hover:brightness-90 active:scale-[0.99] ${style.bg} ${style.text}`}
                             style={{
                               left: colStart * CELL_W + 2,
                               width: colSpan * CELL_W - 4,

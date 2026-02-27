@@ -80,16 +80,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ activeKey, onSelect }) => {
   const showCompanies = isSuperAdmin;
 
   return (
-    <nav className="flex flex-col gap-2 p-0">
+    <nav className="flex flex-col gap-0 px-2 rounded-lg">
       <SidebarGroup>
-        <SidebarGroupLabel className="text-tourism-navy font-semibold">Gestión Principal</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-waiwa-forest font-semibold">Gestión Principal</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenuList>
 
             {menuItems.filter(item => allowedKeys.has(item.key)).map((item) => (
               <SidebarMenuItem key={item.key}>
                 <SidebarMenuButton
-                  className={`flex items-center gap-2 hover:bg-tourism-sage/10 hover:text-tourism-navy ${activeKey === item.key ? 'bg-tourism-teal/10 text-tourism-navy border-r-2 border-tourism-teal' : ''}`}
+                  className={`flex items-center gap-2 hover:bg-waiwa-mauve/10 hover:text-waiwa-forest ${activeKey === item.key ? 'bg-waiwa-amber/15 text-waiwa-forest border-r-2 border-waiwa-amber' : ''}`}
                   onClick={() => onSelect(item.key)}
                   data-active={activeKey === item.key}
                 >
@@ -127,13 +127,13 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ activeKey, onSelect }) => {
         </SidebarGroupContent>
       </SidebarGroup>
       <SidebarGroup>
-        <SidebarGroupLabel className="text-tourism-navy font-semibold">Análisis y Finanzas</SidebarGroupLabel>
+        <SidebarGroupLabel className="text-waiwa-forest font-semibold">Análisis y Finanzas</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenuList>
             {analyticsItems.filter(item => allowedKeys.has(item.key)).map((item) => (
               <SidebarMenuItem key={item.key}>
                 <SidebarMenuButton
-                  className={`flex items-center gap-2 hover:bg-tourism-sage/10 hover:text-tourism-navy ${activeKey === item.key ? 'bg-tourism-teal/10 text-tourism-navy border-r-2 border-tourism-teal' : ''}`}
+                  className={`flex items-center gap-2 hover:bg-waiwa-mauve/10 hover:text-waiwa-forest ${activeKey === item.key ? 'bg-waiwa-amber/15 text-waiwa-forest border-r-2 border-waiwa-amber' : ''}`}
                   onClick={() => onSelect(item.key)}
                   data-active={activeKey === item.key}
                 >

@@ -59,43 +59,43 @@ const BaseLayout: React.FC = () => {
 
 
   return (
-    <div className="flex min-h-screen bg-white text-foreground max-w-full overflow-hidden">
+    <div className="flex min-h-screen bg-white dark:bg-background text-foreground max-w-full overflow-hidden">
       {/* Sidebar a la izquierda, ocupa toda la altura */}
       <aside className={`${open ? "translate-x-0 w-64" : "-translate-x-full w-0"} 
-    transition-all duration-300 ease-in-out sticky top-0 h-screen flex-shrink-0 border-r border-gray-200 bg-gradient-to-br 
+    transition-all duration-300 ease-in-out sticky top-0 h-screen flex-shrink-0 border-r border-gray-200 dark:border-[#13392f] bg-gradient-to-br 
     from-waiwa-forest via-[#0f5245] to-[#1a6b58] shadow-md flex flex-col rounded-tr-2xl rounded-br-2xl overflow-y-auto overflow-x-hidden`}>
-        <div className="border-b border-gray-200 bg-white px-3 py-4 flex items-center space-x-3">
+        <div className="border-b border-gray-200 dark:border-[#13392f] bg-white dark:bg-[#0a1f1a] px-3 py-4 flex items-center space-x-3">
           <div className="bg-[#e7b61d] p-2 rounded-lg">
             <Logo />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-waiwa-forest">Waiwahost</h1>
-            <p className="text-xs text-gray-500">Gestión Inmobiliaria</p>
+            <h1 className="font-bold text-lg text-waiwa-forest dark:text-waiwa-amber">Waiwahost</h1>
+            <p className="text-xs text-gray-500 dark:text-[#a197ad]">Gestión Inmobiliaria</p>
           </div>
 
         </div>
-        <div className="flex-1 bg-white">
+        <div className="flex-1 bg-white dark:bg-[#0a1f1a]">
           <SidebarMenu activeKey={activeKey} onSelect={handleMenuSelect} />
         </div>
-        <div className="border-t border-gray-200 bg-white p-4 text-center">
-          <p className="text-xs text-gray-500">© 2025 Waiwahost</p>
-          <p className="text-xs text-gray-400">Versión 1.1.0</p>
+        <div className="border-t border-gray-200 dark:border-[#13392f] bg-white dark:bg-[#0a1f1a] p-4 text-center">
+          <p className="text-xs text-gray-500 dark:text-[#a197ad]">© 2025 Waiwahost</p>
+          <p className="text-xs text-gray-400 dark:text-[#a197ad]/70">Versión 1.1.0</p>
         </div>
       </aside>
       {/* Área derecha: header arriba, content abajo */}
-      <div className="flex flex-col flex-1 h-screen overflow-hidden bg-white min-w-0">
+      <div className="flex flex-col flex-1 h-screen overflow-hidden bg-white dark:bg-background min-w-0">
         {/* Header solo sobre el content, no sobre el sidebar */}
-        <header className="flex-none w-full border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-40">
+        <header className="flex-none w-full border-b border-gray-200 dark:border-[#13392f] bg-white/95 dark:bg-[#0a1f1a]/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-[#0a1f1a]/80 z-40">
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setOpen(!open)}
-                className={`!p-0  !hover:bg-transparent !border-0 !shadow-none flex items-center justify-center ${open ? "!pr-9 !md:p-0" : "!p-0"}`}
+                className={`!p-0 dark:text-white text-[#575757ff] !hover:bg-transparent !border-0 !shadow-none flex items-center justify-center ${open ? "!pr-9 !md:p-0" : "!p-0"}`}
               >
                 {open ? (
-                  <PanelRightOpen size={20} color="#575757ff" />
+                  <PanelRightOpen size={20} />
                 ) : (
-                  <PanelRightClose size={20} color="#575757ff" />
+                  <PanelRightClose size={20} />
                 )}
               </button>
 
@@ -110,14 +110,14 @@ const BaseLayout: React.FC = () => {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-8 bg-white">
+        <main className="flex-1 overflow-y-auto p-8 bg-white dark:bg-background">
           <div className="w-full">
             {COMPONENTS[activeKey]}
           </div>
         </main>
         {/* Footer adaptado visualmente */}
-        <footer className="flex-none w-full border-t border-gray-200 bg-white px-6 py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-600">
+        <footer className="flex-none w-full border-t border-gray-200 dark:border-[#13392f] bg-white dark:bg-[#0a1f1a] px-6 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-600 dark:text-[#a197ad]">
             <div className="flex items-center space-x-4">
               <span>© 2025 Waiwahost. Todos los derechos reservados.</span>
             </div>

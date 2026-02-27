@@ -17,72 +17,106 @@ body {
     /* Waiwa brand: forest #0c4136, amber #e7b61d, lime #d7f313 */
     /* rust #b76a07, ochre #b48000, sky #b1c1e4, mauve #a197ad   */
     --background: 0 0% 100%;
-    --foreground: 160 64% 14%;        /* forest-tinted dark text */
+    --foreground: 160 64% 14%;
+    /* forest-tinted dark text */
     --card: 0 0% 100%;
     --card-foreground: 160 64% 14%;
     --popover: 0 0% 100%;
     --popover-foreground: 160 64% 14%;
-    --primary: 160 64% 14%;          /* waiwa-forest #0c4136 */
+    --primary: 160 64% 14%;
+    /* waiwa-forest #0c4136 */
     --primary-foreground: 0 0% 98%;
-    --secondary: 215 38% 80%;        /* waiwa-sky #b1c1e4 */
+    --secondary: 215 38% 80%;
+    /* waiwa-sky #b1c1e4 */
     --secondary-foreground: 160 64% 14%;
     --muted: 215 38% 92%;
-    --muted-foreground: 270 10% 62%; /* waiwa-mauve #a197ad */
-    --accent: 44 83% 63%;            /* waiwa-amber #e7b61d */
+    --muted-foreground: 270 10% 62%;
+    /* waiwa-mauve #a197ad */
+    --accent: 44 83% 63%;
+    /* waiwa-amber #e7b61d */
     --accent-foreground: 160 64% 14%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 215 20% 88%;
     --input: 215 20% 88%;
-    --ring: 44 83% 63%;              /* amber ring on focus */
-    --chart-1: 160 64% 14%;         /* forest */
-    --chart-2: 44 83% 63%;          /* amber */
-    --chart-3: 73 97% 52%;          /* lime */
-    --chart-4: 28 93% 38%;          /* rust */
-    --chart-5: 270 10% 62%;         /* mauve */
+    --ring: 44 83% 63%;
+    /* amber ring on focus */
+    --chart-1: 160 64% 14%;
+    /* forest */
+    --chart-2: 44 83% 63%;
+    /* amber */
+    --chart-3: 73 97% 52%;
+    /* lime */
+    --chart-4: 28 93% 38%;
+    /* rust */
+    --chart-5: 270 10% 62%;
+    /* mauve */
     --radius: 0.5rem;
-    --sidebar-background: 160 64% 14%;  /* forest */
+    --sidebar-background: 160 64% 14%;
+    /* forest */
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 44 83% 63%;       /* amber */
+    --sidebar-primary: 44 83% 63%;
+    /* amber */
     --sidebar-primary-foreground: 160 64% 14%;
     --sidebar-accent: 160 50% 20%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 160 40% 22%;
     --sidebar-ring: 44 83% 63%;
   }
+
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    /* ── Waiwa Dark Theme ─────────────────────────────────────── */
+    /* Surface scale: darkest → lightest                          */
+    /* #0a1f1a (base) · #0f2d26 (card) · #13392f (elevated)      */
+    /* Accent: amber #e7b61d · Text: warm white #f0ede8           */
+    --background: 160 40% 8%;
+    /* #0a1f1a deep forest bg */
+    --foreground: 36 20% 94%;
+    /* #f0ede8 warm white text */
+    --card: 160 42% 11%;
+    /* #0f2d26 card surface   */
+    --card-foreground: 36 20% 94%;
+    --popover: 160 42% 11%;
+    --popover-foreground: 36 20% 94%;
+    --primary: 44 83% 63%;
+    /* amber – primary action  */
+    --primary-foreground: 160 64% 8%;
+    --secondary: 160 35% 18%;
+    /* dark green elevated     */
+    --secondary-foreground: 36 20% 94%;
+    --muted: 160 30% 15%;
+    --muted-foreground: 270 10% 62%;
+    /* mauve #a197ad          */
+    --accent: 44 83% 63%;
+    /* amber                   */
+    --accent-foreground: 160 64% 8%;
+    --destructive: 0 62.8% 40%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 160 30% 18%;
+    /* subtle dark border      */
+    --input: 160 35% 14%;
+    --ring: 44 83% 63%;
+    /* amber focus ring        */
+    --chart-1: 44 83% 63%;
+    /* amber  */
+    --chart-2: 73 97% 52%;
+    /* lime   */
+    --chart-3: 160 60% 45%;
+    /* forest */
+    --chart-4: 28 93% 50%;
+    /* rust   */
+    --chart-5: 270 10% 62%;
+    /* mauve  */
+    --sidebar-background: 160 45% 6%;
+    /* #07180f darkest sidebar */
+    --sidebar-foreground: 36 20% 94%;
+    --sidebar-primary: 44 83% 63%;
+    /* amber active            */
+    --sidebar-primary-foreground: 160 64% 8%;
+    --sidebar-accent: 160 40% 14%;
+    --sidebar-accent-foreground: 36 20% 94%;
+    --sidebar-border: 160 35% 12%;
+    --sidebar-ring: 44 83% 63%;
   }
 }
 
@@ -90,6 +124,7 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }

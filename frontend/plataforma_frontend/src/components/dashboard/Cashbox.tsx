@@ -16,6 +16,7 @@ import {
   deleteMovimiento
 } from '../../auth/movimientosApi';
 import { PLATAFORMAS_ORIGEN, PlataformaOrigen } from '../../constants/plataformas';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const Cashbox: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -130,8 +131,8 @@ const Cashbox: React.FC = () => {
       {/* Header */}
       <div className="flex-1 sm:flex lg:flex space-y-3 md:space-y-0 items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-tourism-navy">Caja Diaria</h1>
-          <p className="text-gray-600">Gestión de movimientos de ingresos y egresos</p>
+          <h1 className="text-2xl font-bold text-tourism-navy dark:text-white">Caja Diaria</h1>
+          <p className="text-gray-600 dark:text-white">Gestión de movimientos de ingresos y egresos</p>
         </div>
         <div className="flex items-center gap-3">
           <ExportExcelButton onClick={() => setShowExportModal(true)} />
@@ -146,25 +147,30 @@ const Cashbox: React.FC = () => {
       />
 
       {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center gap-4">
-          <label className="text-sm font-medium text-gray-700">
+      <div className="bg-white dark:bg-card p-4 rounded-[1rem] shadow-sm border border-gray-100 dark:border-border mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <label className="text-sm font-medium text-tourism-navy dark:text-foreground">
             Filtrar por plataforma:
           </label>
-          <select
+          <Select
             value={selectedPlataforma}
-            onChange={(e) => handlePlataformaChange(e.target.value as PlataformaOrigen | 'todas')}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-tourism-teal focus:border-transparent text-sm"
+            onValueChange={(value) => handlePlataformaChange(value as PlataformaOrigen | 'todas')}
           >
-            <option value="todas">Todas las plataformas</option>
-            {PLATAFORMAS_ORIGEN.map((plataforma) => (
-              <option key={plataforma.value} value={plataforma.value}>
-                {plataforma.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-full sm:w-[260px] border-gray-200 dark:border-border bg-white dark:bg-muted/40 text-gray-700 dark:text-gray-200 focus:ring-tourism-teal focus:border-tourism-teal">
+              <SelectValue placeholder="Todas las plataformas" />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-card border-gray-100 dark:border-border shadow-md">
+              <SelectItem value="todas" className="focus:bg-gray-50 dark:focus:bg-muted/50 focus:text-tourism-teal dark:focus:text-tourism-teal cursor-pointer">Todas las plataformas</SelectItem>
+              {PLATAFORMAS_ORIGEN.map((plataforma) => (
+                <SelectItem key={plataforma.value} value={plataforma.value} className="focus:bg-gray-50 dark:focus:bg-muted/50 focus:text-tourism-teal dark:focus:text-tourism-teal cursor-pointer">
+                  {plataforma.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {selectedPlataforma !== 'todas' && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-muted-foreground mt-2 sm:mt-0">
               Mostrando solo movimientos de {PLATAFORMAS_ORIGEN.find(p => p.value === selectedPlataforma)?.label}
             </span>
           )}

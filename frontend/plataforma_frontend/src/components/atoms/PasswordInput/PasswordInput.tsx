@@ -33,7 +33,7 @@ const PasswordInput = ({
           {...inputProps}
           type={isVisible ? "text" : "password"}
           className={clsx(
-            "h-12 w-full rounded-md border border-gray-200 pr-10 focus:outline-none focus:ring-1",
+            " w-full rounded-md border border-gray-200 pr-10 focus:outline-none focus:ring-1",
             leftIcon && "pl-10",
             className
           )}

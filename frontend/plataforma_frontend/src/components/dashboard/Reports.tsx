@@ -86,7 +86,7 @@ export default function NuevoReporteFinanciero() {
                 }
             } else if (filterMode === 'propietario') {
                 try {
-                    const propietariosData = await getPropietariosApi(filters.empresaId);
+                    const propietariosData = await getPropietariosApi();
                     if (propietariosData) {
                         const mappedPropietarios = propietariosData.map(p => ({
                             id: Number(p.id),
@@ -348,90 +348,92 @@ export default function NuevoReporteFinanciero() {
                     </Card>
 
                     {/* Reservations Table */}
-                    <Card>
-                        <CardHeader><CardTitle>Detalle de Reservas</CardTitle></CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-50 text-gray-700 uppercase">
-                                        <tr>
-                                            <th className="px-4 py-3">Código</th>
-                                            <th className="px-4 py-3">Inmueble</th>
-                                            <th className="px-4 py-3">Huésped</th>
-                                            <th className="px-4 py-3">Plataforma</th>
-                                            <th className="px-4 py-3">Ingreso</th>
-                                            <th className="px-4 py-3">Salida</th>
-                                            <th className="px-4 py-3">Noches</th>
-                                            <th className="px-4 py-3">Total</th>
+                    <div className="rounded-[1rem] border border-gray-100 dark:border-border overflow-hidden bg-white dark:bg-card shadow-sm w-full">
+                        <div className="p-4 border-b border-gray-100 dark:border-border bg-white dark:bg-card flex justify-between items-center">
+                            <h3 className="text-lg font-semibold text-tourism-navy dark:text-foreground">Detalle de Reservas</h3>
+                        </div>
+                        <div className="overflow-x-auto w-full">
+                            <table className="w-full text-sm text-left relative">
+                                <thead className="bg-waiwa-sky dark:bg-waiwa-amber text-[#64748b] dark:text-muted-foreground text-[13px] font-semibold border-b border-gray-100 dark:border-border">
+                                    <tr>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Código</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Inmueble</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Huésped</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black text-center">Plataforma</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Ingreso</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Salida</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black text-center">Noches</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black text-right">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-border/50 bg-white dark:bg-card">
+                                    {reportData.reservas.map((r: any) => (
+                                        <tr key={r.id_reserva} className="hover:bg-gray-50/80 dark:hover:bg-muted/20 transition-colors group">
+                                            <td className="px-5 py-4 whitespace-nowrap font-semibold text-gray-900 dark:text-foreground text-[13px]">{r.codigo_reserva}</td>
+                                            <td className="px-5 py-4 text-[13px] font-medium text-gray-900 dark:text-foreground">{r.nombre_inmueble}</td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">{r.nombre_huesped} {r.apellido_huesped}</td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-center text-[13px]">
+                                                <span className="capitalize">{r.plataforma_origen || 'N/A'}</span>
+                                            </td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">{new Date(r.fecha_inicio).toLocaleDateString()}</td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">{new Date(r.fecha_fin).toLocaleDateString()}</td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-center text-[13px] text-gray-700 dark:text-gray-300 font-medium">{r.noches}</td>
+                                            <td className="px-5 py-4 whitespace-nowrap font-bold text-right text-[13px]">{formatCurrency(r.total_reserva)}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {reportData.reservas.map((r: any) => (
-                                            <tr key={r.id_reserva} className="border-b hover:bg-gray-50">
-                                                <td className="px-4 py-3 font-medium">{r.codigo_reserva}</td>
-                                                <td className="px-4 py-3">{r.nombre_inmueble}</td>
-                                                <td className="px-4 py-3">{r.nombre_huesped} {r.apellido_huesped}</td>
-                                                <td className="px-4 py-3 capitalize">{r.plataforma_origen || 'N/A'}</td>
-                                                <td className="px-4 py-3">{new Date(r.fecha_inicio).toLocaleDateString()}</td>
-                                                <td className="px-4 py-3">{new Date(r.fecha_fin).toLocaleDateString()}</td>
-                                                <td className="px-4 py-3">{r.noches}</td>
-                                                <td className="px-4 py-3 font-semibold">{formatCurrency(r.total_reserva)}</td>
-                                            </tr>
-                                        ))}
-                                        {reportData.reservas.length > 0 && (
-                                            <tr className="bg-green-50 border-t-2 border-green-200">
-                                                <td colSpan={7} className="px-4 py-3 text-right font-bold text-green-800">Total Reservas:</td>
-                                                <td className="px-4 py-3 font-bold text-green-800 text-lg">
-                                                    {formatCurrency(reportData.reservas.reduce((sum: number, r: any) => sum + Number(r.total_reserva || 0), 0))}
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                                {reportData.reservas.length === 0 && <p className="text-center py-4 text-gray-500">No hay reservas en este periodo.</p>}
-                            </div>
-                        </CardContent>
-                    </Card>
+                                    ))}
+                                    {reportData.reservas.length > 0 && (
+                                        <tr className="bg-green-50 dark:bg-green-900/10 border-t border-green-200 dark:border-green-900/30">
+                                            <td colSpan={7} className="px-5 py-4 text-right font-bold text-green-800 dark:text-green-400 text-[13px] uppercase tracking-wider">Total Reservas:</td>
+                                            <td className="px-5 py-4 font-bold text-right text-green-800 dark:text-green-400 text-base">
+                                                {formatCurrency(reportData.reservas.reduce((sum: number, r: any) => sum + Number(r.total_reserva || 0), 0))}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                            {reportData.reservas.length === 0 && <p className="text-center py-12 text-gray-500 dark:text-muted-foreground">No hay reservas en este periodo.</p>}
+                        </div>
+                    </div>
 
                     {/* Expenses Table */}
-                    <Card>
-                        <CardHeader><CardTitle>Detalle de Gastos</CardTitle></CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-gray-50 text-gray-700 uppercase">
-                                        <tr>
-                                            <th className="px-4 py-3">Fecha</th>
-                                            <th className="px-4 py-3">Inmueble</th>
-                                            <th className="px-4 py-3">Concepto</th>
-                                            <th className="px-4 py-3">Descripción</th>
-                                            <th className="px-4 py-3">Valor</th>
+                    <div className="rounded-[1rem] border border-gray-100 dark:border-border overflow-hidden bg-white dark:bg-card shadow-sm w-full">
+                        <div className="p-4 border-b border-gray-100 dark:border-border bg-white dark:bg-card flex justify-between items-center">
+                            <h3 className="text-lg font-semibold text-tourism-navy dark:text-foreground">Detalle de Gastos</h3>
+                        </div>
+                        <div className="overflow-x-auto w-full">
+                            <table className="w-full text-sm text-left relative">
+                                <thead className="bg-waiwa-sky dark:bg-waiwa-amber text-[#64748b] dark:text-muted-foreground text-[13px] font-semibold border-b border-gray-100 dark:border-border">
+                                    <tr>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Fecha</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Inmueble</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Concepto</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">Descripción</th>
+                                        <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black text-right">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-border/50 bg-white dark:bg-card">
+                                    {reportData.gastos.map((g: any) => (
+                                        <tr key={g.id_movimiento} className="hover:bg-gray-50/80 dark:hover:bg-muted/20 transition-colors group">
+                                            <td className="px-5 py-4 whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">{new Date(g.fecha).toLocaleDateString()}</td>
+                                            <td className="px-5 py-4 text-[13px] font-medium text-gray-900 dark:text-foreground">{g.nombre_inmueble}</td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-[13px] font-medium text-gray-700 dark:text-gray-300 capitalize">{g.concepto.replace('_', ' ')}</td>
+                                            <td className="px-5 py-4 text-[13px] text-gray-700 dark:text-gray-300 truncate max-w-xs">{g.descripcion}</td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-right font-bold text-red-600 dark:text-red-400 text-[13px]">{formatCurrency(g.monto)}</td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {reportData.gastos.map((g: any) => (
-                                            <tr key={g.id_movimiento} className="border-b hover:bg-gray-50">
-                                                <td className="px-4 py-3">{new Date(g.fecha).toLocaleDateString()}</td>
-                                                <td className="px-4 py-3">{g.nombre_inmueble}</td>
-                                                <td className="px-4 py-3 capitalize">{g.concepto.replace('_', ' ')}</td>
-                                                <td className="px-4 py-3">{g.descripcion}</td>
-                                                <td className="px-4 py-3 font-semibold text-red-600">{formatCurrency(g.monto)}</td>
-                                            </tr>
-                                        ))}
-                                        {reportData.gastos.length > 0 && (
-                                            <tr className="bg-red-50 border-t-2 border-red-200">
-                                                <td colSpan={4} className="px-4 py-3 text-right font-bold text-red-800">Total Gastos:</td>
-                                                <td className="px-4 py-3 font-bold text-red-800 text-lg">
-                                                    {formatCurrency(reportData.gastos.reduce((sum: number, g: any) => sum + Number(g.monto || 0), 0))}
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                                {reportData.gastos.length === 0 && <p className="text-center py-4 text-gray-500">No hay gastos en este periodo.</p>}
-                            </div>
-                        </CardContent>
-                    </Card>
+                                    ))}
+                                    {reportData.gastos.length > 0 && (
+                                        <tr className="bg-red-50 dark:bg-red-900/10 border-t border-red-200 dark:border-red-900/30">
+                                            <td colSpan={4} className="px-5 py-4 text-right font-bold text-red-800 dark:text-red-400 text-[13px] uppercase tracking-wider">Total Gastos:</td>
+                                            <td className="px-5 py-4 font-bold text-right text-red-800 dark:text-red-400 text-base">
+                                                {formatCurrency(reportData.gastos.reduce((sum: number, g: any) => sum + Number(g.monto || 0), 0))}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                            {reportData.gastos.length === 0 && <p className="text-center py-12 text-gray-500 dark:text-muted-foreground">No hay gastos en este periodo.</p>}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

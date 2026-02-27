@@ -6,7 +6,7 @@ import { Slot } from '@radix-ui/react-slot';
 export const SidebarGroup = React.forwardRef<HTMLDivElement, React.ComponentProps<'div'>>(
   function SidebarGroup({ className, ...props }, ref) {
     return (
-      <div ref={ref} className={cn('relative flex w-full min-w-0 flex-col p-2', className)} {...props} />
+      <div ref={ref} className={cn('relative flex w-full min-w-0 flex-col rounded-lg', className)} {...props} />
     );
   }
 );
@@ -36,7 +36,7 @@ export const SidebarGroupContent = React.forwardRef<HTMLDivElement, React.Compon
 export const SidebarMenu = React.forwardRef<HTMLUListElement, React.ComponentProps<'ul'>>(
   function SidebarMenu({ className, ...props }, ref) {
     return (
-      <ul ref={ref} data-sidebar="menu" className={cn('flex w-full min-w-0 flex-col gap-1', className)} {...props} />
+      <ul ref={ref} data-sidebar="menu" className={cn('flex w-full min-w-0 flex-col gap-0', className)} {...props} />
     );
   }
 );

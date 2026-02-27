@@ -1,11 +1,8 @@
 import React from 'react';
-import {
-  Building2,
-} from "lucide-react"
 
 const Logo: React.FC = () => (
-  <div className="bg-tourism-gold p-2 rounded-lg">
-    <Building2 className="h-6 w-6 text-tourism-navy" />
+  <div className="bg-[#e7b61d] p-0 rounded-lg">
+    <img src="/img/Waiwa Host_Logo (15).png" alt="Waiwa Host Logo" className="w-12 h-14" />
   </div>
 );
 

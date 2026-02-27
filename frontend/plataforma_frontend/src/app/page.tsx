@@ -38,7 +38,7 @@ export default function Home() {
           >
             <Image
               className="dark:invert"
-              src="/vercel.svg"
+              src="/img/Waiwa Host_Logo (11).png"
               alt="Vercel logomark"
               width={20}
               height={20}

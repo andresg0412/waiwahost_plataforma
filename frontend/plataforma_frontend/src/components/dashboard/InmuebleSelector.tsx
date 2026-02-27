@@ -1,6 +1,6 @@
 import React from 'react';
-
 import { Inmueble } from '../../interfaces/Inmueble';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface InmuebleSelectorProps {
   inmuebles: Inmueble[];
@@ -13,31 +13,21 @@ const InmuebleSelector: React.FC<InmuebleSelectorProps> = ({
   selectedInmueble,
   setSelectedInmueble,
 }) => {
-
-    
   return (
     <div className="flex items-center space-x-2">
-      <label htmlFor="inmueble-selector" className="text-sm font-medium text-gray-700">
-        Inmueble:
-      </label>
-
-      <select
-        id="inmueble-selector"
-        name="inmueble-selector"
-        className="block w-full pl-3 pr-10 py-2 text-base border-gray-300
-                   focus:outline-none focus:ring-indigo-500 focus:border-indigo-500
-                   sm:text-sm rounded-md"
-        value={selectedInmueble}
-        onChange={(e) => setSelectedInmueble(Number(e.target.value))}
-      >
-        <option value={-1}>Todos</option>
-
-        {inmuebles.map((inmueble) => (
-          <option key={inmueble.id} value={inmueble.id}>
-            {inmueble.nombre}
-          </option>
-        ))}
-      </select>
+      <Select value={String(selectedInmueble)} onValueChange={(val) => setSelectedInmueble(Number(val))}>
+        <SelectTrigger className="w-full min-w-[160px] border-gray-200 dark:border-border dark:bg-background dark:text-foreground focus:ring-waiwa-amber h-10">
+          <SelectValue placeholder="Filtro Inmuebles" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="-1">Todos los inmuebles</SelectItem>
+          {inmuebles.map((inmueble) => (
+            <SelectItem key={inmueble.id} value={String(inmueble.id)}>
+              {inmueble.nombre}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

@@ -9,11 +9,12 @@ export interface InputFieldProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   required?: boolean;
+  className?: string;
 }
 
-export const InputField: React.FC<InputFieldProps> = ({ label, type = 'text', value, onChange, placeholder, required }) => (
+export const InputField: React.FC<InputFieldProps> = ({ label, type = 'text', value, onChange, placeholder, required, className }) => (
   <div className="flex flex-col gap-1">
     <Label>{label}</Label>
-    <Input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} />
+    <Input type={type} value={value} onChange={onChange} placeholder={placeholder} required={required} className={className} />
   </div>
 );

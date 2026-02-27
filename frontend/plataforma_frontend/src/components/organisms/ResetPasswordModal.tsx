@@ -50,20 +50,20 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({ open, on
     <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-lg p-6 w-96 relative">
         <button className="absolute top-2 right-3 text-gray-500" onClick={onClose}>&times;</button>
-        <h3 className="text-lg font-bold mb-4 text-center">Restablecer contraseña</h3>
+        <h3 className="text-lg text-tourism-navy font-bold mb-4 text-center">Restablecer contraseña</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <InputField label="Correo electrónico" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+          <InputField className="dark:text-black" label="Correo electrónico" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
           <PasswordInput
             label="Nueva contraseña"
             value={newPassword}
             onChange={e => setNewPassword(e.target.value)}
             required
-            className="px-4"
+            className="px-4 py-2 dark:text-black"
           />
           <PasswordCriteria password={newPassword} criteria={passwordCriteria} />
           {error && <div className="text-red-500 text-sm text-center">{error}</div>}
           <div className="flex gap-2 mt-2">
-            <Button type="button" variant="secondary" className="flex-1 bg-gray-500 hover:bg-gray-700 text-white font-medium" onClick={onClose}>Cancelar</Button>
+            <Button type="button" variant="secondary" className="flex-1 bg-gray-500 hover:bg-gray-700 text-white font-medium dark:bg-gray-700 dark:hover:bg-gray-500" onClick={onClose}>Cancelar</Button>
             <Button type="submit" className="flex-1 bg-tourism-navy hover:bg-tourism-navy/90 text-white font-medium" disabled={loading || !isValid}>{loading ? 'Enviando...' : 'Aceptar'}</Button>
           </div>
         </form>

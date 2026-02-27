@@ -80,125 +80,122 @@ const MovimientosTable: React.FC<MovimientosTableProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-tourism-navy">Movimientos del Día</h3>
+    <div className="rounded-[1rem] border border-gray-100 dark:border-border overflow-hidden bg-white dark:bg-card shadow-sm w-full">
+      <div className="p-4 border-b border-gray-100 dark:border-border bg-white dark:bg-card">
+        <h3 className="text-lg font-semibold text-tourism-navy dark:text-foreground">Movimientos del Día</h3>
       </div>
-      
+
       {movimientos.length === 0 ? (
-        <div className="p-8 text-center">
-          <p className="text-gray-500">No hay movimientos registrados para esta fecha</p>
+        <div className="p-12 text-center">
+          <p className="text-gray-500 dark:text-muted-foreground">No hay movimientos registrados para esta fecha</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-sm text-left relative">
+            <thead className="bg-waiwa-sky dark:bg-waiwa-amber text-[#64748b] dark:text-muted-foreground text-[13px] font-semibold border-b border-gray-100 dark:border-border">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">
                   Hora
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">
                   Tipo
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">
                   Concepto
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">
                   Descripción
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">
                   Inmueble
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">
                   Reserva
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black text-center">
                   Plataforma
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black">
                   Método
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap font-medium dark:text-black text-right">
                   Monto
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-5 py-4 whitespace-nowrap dark:text-black font-medium text-center sticky right-0 bg-waiwa-sky dark:bg-waiwa-amber shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] border-l border-gray-100 dark:border-border z-10 w-[140px]">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-100 dark:divide-border/50 bg-white dark:bg-card">
               {movimientos.map((movimiento) => (
-                <tr key={movimiento.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                <tr key={movimiento.id} className="hover:bg-gray-50/80 dark:hover:bg-muted/20 transition-colors group">
+                  <td className="px-5 py-4 whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">
                     {formatTime(movimiento.fecha_creacion)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm">
+                  <td className="px-5 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {movimiento.tipo === 'ingreso' ? (
-                        <TrendingUp className="h-4 w-4 text-green-600" />
+                        <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-500" />
                       ) : (
-                        <TrendingDown className="h-4 w-4 text-red-600" />
+                        <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-500" />
                       )}
-                      <span className={`font-medium capitalize ${
-                        movimiento.tipo === 'ingreso' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <span className={`text-[13px] font-semibold capitalize ${movimiento.tipo === 'ingreso' ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'
+                        }`}>
                         {movimiento.tipo}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-5 py-4 whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300 font-medium">
                     {getConceptoLabel(movimiento.concepto)}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">
+                  <td className="px-5 py-4 text-[13px] text-gray-700 dark:text-gray-300 max-w-xs truncate">
                     {movimiento.descripcion}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">
+                  <td className="px-5 py-4 text-[13px] font-medium text-gray-900 dark:text-foreground">
                     {movimiento.nombre_inmueble}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-5 py-4 whitespace-nowrap text-[13px]">
                     {movimiento.codigo_reserva ? (
-                      <span className="text-tourism-teal font-medium">
+                      <span className="text-tourism-teal font-semibold">
                         {movimiento.codigo_reserva}
                       </span>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-gray-400 dark:text-gray-500 italic">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm">
+                  <td className="px-5 py-4 whitespace-nowrap text-center">
                     <PlataformaBadge plataforma={movimiento.plataforma_origen} showEmpty={false} />
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-5 py-4 whitespace-nowrap text-[13px] text-gray-700 dark:text-gray-300">
                     {getMetodoPagoLabel(movimiento.metodo_pago)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-right font-medium">
-                    <span className={movimiento.tipo === 'ingreso' ? 'text-green-600' : 'text-red-600'}>
+                  <td className="px-5 py-4 whitespace-nowrap text-right">
+                    <div className={`text-[13px] font-bold ${movimiento.tipo === 'ingreso' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                       {movimiento.tipo === 'ingreso' ? '+' : '-'}{formatCurrency(movimiento.monto)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center gap-1">
-                      <button
-                        onClick={() => onView(movimiento)}
-                        className="p-1.5 text-gray-600 hover:text-tourism-teal hover:bg-tourism-teal/10 rounded transition-colors"
-                        title="Ver detalle"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => onEdit(movimiento)}
-                        className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        title="Editar"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => onDelete(movimiento)}
-                        className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Eliminar"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </div>
+                  </td>
+                  <td className="flex w-full h-full items-center justify-center text-center text-gray-500 dark:text-gray-400 gap-2 sticky right-0 bg-white dark:bg-card border-l border-gray-100 dark:border-border transition-colors z-10 h-[72px]">
+                    <button
+                      onClick={() => onView(movimiento)}
+                      className="p-1.5 rounded-md hover:bg-green-100 hover:text-green-800 dark:hover:bg-green-900/40 dark:hover:text-green-400 border border-transparent transition-colors items-center justify-center"
+                      title="Ver detalle"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => onEdit(movimiento)}
+                      className="p-1.5 rounded-md hover:bg-blue-100 hover:text-blue-800 dark:hover:bg-blue-900/40 dark:hover:text-blue-400 border border-transparent transition-colors items-center justify-center"
+                      title="Editar"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(movimiento)}
+                      className="p-1.5 rounded-md hover:bg-red-100 hover:text-red-800 dark:hover:bg-red-900/40 dark:hover:text-red-400 border border-transparent transition-colors items-center justify-center"
+                      title="Eliminar"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </td>
                 </tr>
               ))}

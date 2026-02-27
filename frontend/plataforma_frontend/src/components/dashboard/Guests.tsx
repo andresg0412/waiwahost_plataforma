@@ -119,8 +119,8 @@ const Guests: React.FC = () => {
     <div className="p-6">
       <div className="flex-1 sm:flex lg:flex space-y-3 md:space-y-0 justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Huéspedes</h2>
-          <p className="text-gray-600 mt-1">Gestión de huéspedes y sus datos</p>
+          <h2 className="text-2xl font-bold text-foreground dark:text-">Huéspedes</h2>
+          <p className="text-muted-foreground mt-1 dark:text-gray-400">Gestión de huéspedes y sus datos</p>
         </div>
         
         <CreateHuespedButton

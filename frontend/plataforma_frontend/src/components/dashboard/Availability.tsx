@@ -3,10 +3,13 @@ import React, { useMemo, useState, useEffect } from "react";
 import { addDays, format, isSameMonth, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "../atoms/Button";
-import { Plus, Filter, Lock, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Plus, Filter, Lock, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
 import CreateReservaModal from "./CreateReservaModal";
 import CreateBloqueoModal from "./CreateBloqueoModal";
 import ReservaDetailModal from "./ReservaDetailModal";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { IReservaForm, IReservaTableData } from "../../interfaces/Reserva";
 import { createReservaApi, getReservaDetalleApi, editReservaApi } from "../../auth/reservasApi";
 import { IBloqueo } from "../../interfaces/Bloqueo";
@@ -90,7 +93,7 @@ const ESTADO_COLORS: Record<string, { bg: string; text: string; badge: string; b
 
 const ESTADO_LABEL: Record<string, string> = {
   confirmada: 'Confirmada',
-  pendiente: 'Pago pendiente',
+  pendiente: 'Pendiente',
   bloqueado: 'Bloqueado',
 };
 
@@ -329,106 +332,124 @@ const Availability: React.FC = () => {
 
   // ── Render ────────────────────────────────────
   return (
-    <div className="p-6 bg-white dark:bg-background rounded-lg flex flex-col gap-4">
+    <div className="p-6 bg-white dark:bg-background rounded-2xl flex flex-col gap-4 shadow-lg border border-gray-100 dark:border-border">
 
       {/* ── Title + action buttons ── */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold dark:text-waiwa-amber">Disponibilidad de Inmuebles</h2>
+        <div className="flex gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="block text-sm font-medium">Desde:</label>
+            <input
+              type="date"
+              value={startDate ? format(startDate, 'yyyy-MM-dd') : ''}
+              onChange={(e) => {
+                const dateStr = e.target.value;
+                if (dateStr) {
+                  // Keep native functionality but map backwards
+                  const [year, month, day] = dateStr.split('-');
+                  const adjustedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                  setPeriodoFijo(null);
+                  setStartDate(adjustedDate);
+                  setWindowStart(adjustedDate);
+                }
+              }}
+              className="flex h-10 w-full min-w-[160px] items-center justify-between rounded-md border border-gray-200 dark:border-border bg-white px-3 py-2 text-sm dark:bg-background dark:text-foreground cursor-pointer outline-none focus:ring-2 focus:ring-waiwa-amber hover:bg-gray-50 dark:hover:bg-secondary/50 transition-colors"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="block text-sm font-medium dark:text-foreground dark:bg-background">Hasta:</label>
+            <input
+              type="date"
+              value={endDate ? format(endDate, 'yyyy-MM-dd') : ''}
+              onChange={(e) => {
+                const dateStr = e.target.value;
+                if (dateStr) {
+                  const [year, month, day] = dateStr.split('-');
+                  const adjustedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                  setPeriodoFijo(null);
+                  setEndDate(adjustedDate);
+                }
+              }}
+              className="flex h-10 w-full min-w-[160px] items-center justify-between rounded-md border border-gray-200 dark:border-border bg-white px-3 py-2 text-sm dark:bg-background dark:text-foreground cursor-pointer outline-none focus:ring-2 focus:ring-waiwa-amber hover:bg-gray-50 dark:hover:bg-secondary/50 transition-colors"
+            />
+          </div>
+        </div>
         <div className="flex gap-3">
           <Button
             onClick={() => { setIsEditMode(false); setIsCreateModalOpen(true); }}
             className="bg-tourism-teal hover:bg-tourism-teal/80 text-white flex items-center gap-2"
           >
-            <Plus className="h-4 w-4" /> Crear Reserva
+            Crear Reserva
           </Button>
           <Button
             onClick={() => { setSelectedBloqueo(undefined); setIsEditBloqueoMode(false); setIsCreateBloqueoModalOpen(true); }}
             className="bg-tourism-teal hover:bg-tourism-teal/80 text-white flex items-center gap-2"
           >
-            <Lock className="h-4 w-4" /> Crear Bloqueo
+            Crear Bloqueo <Lock className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* ── Original filters ── */}
-      <div className="flex flex-wrap gap-4 p-4 bg-gray-50 dark:bg-card rounded-lg border border-gray-100 dark:border-border">
+      <div className="flex flex-wrap gap-8 rounded-lg py-4">
         <div>
           <label className="block text-sm font-medium mb-1">Periodo fijo</label>
-          <select
-            value={periodoFijo ?? ""}
-            onChange={handlePeriodoFijoChange}
-            className="border border-gray-200 dark:border-border dark:bg-background dark:text-foreground rounded px-3 py-2 focus:ring-2 focus:ring-waiwa-amber focus:border-transparent outline-none"
-          >
-            <option value="">Personalizado</option>
-            {periodosFijos.map(p => (
-              <option key={p.days} value={p.days}>{p.label}</option>
-            ))}
-          </select>
+          <Select value={periodoFijo ? String(periodoFijo) : "personalizado"} onValueChange={(val) => {
+            const fakeEvent = { target: { value: val === "personalizado" ? "" : val } } as any;
+            handlePeriodoFijoChange(fakeEvent);
+          }}>
+            <SelectTrigger className="w-full min-w-[150px] border-gray-200 dark:border-border dark:bg-background dark:text-foreground focus:ring-waiwa-amber h-10">
+              <SelectValue placeholder="Periodo fijo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="personalizado">Personalizado</SelectItem>
+              {periodosFijos.map(p => (
+                <SelectItem key={p.days} value={String(p.days)}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-
-        {!periodoFijo && (
-          <>
-            <div>
-              <label className="block text-sm font-medium mb-1">Desde</label>
-              <input
-                type="date"
-                value={format(startDate, 'yyyy-MM-dd')}
-                onChange={e => { setStartDate(parseDateNoTz(e.target.value)); setWindowStart(parseDateNoTz(e.target.value)); }}
-                className="border border-gray-200 dark:border-border dark:bg-background dark:text-white rounded px-3 py-2 outline-none focus:ring-2 focus:ring-waiwa-amber"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Hasta</label>
-              <input
-                type="date"
-                value={format(endDate, 'yyyy-MM-dd')}
-                onChange={e => setEndDate(parseDateNoTz(e.target.value))}
-                className="border border-gray-200 dark:border-border dark:bg-background dark:text-foreground rounded px-3 py-2 outline-none focus:ring-2 focus:ring-waiwa-amber"
-              />
-            </div>
-          </>
-        )}
 
         <div>
           <label className="block text-sm font-medium mb-1">Ciudad</label>
-          <div className="relative">
-            <select
-              value={ciudadFilter}
-              onChange={e => setCiudadFilter(e.target.value)}
-              className="border border-gray-200 dark:border-border dark:bg-background dark:text-foreground rounded px-3 py-2 appearance-none pr-8 outline-none focus:ring-2 focus:ring-waiwa-amber"
-            >
-              <option value="">Todas las ciudades</option>
-              {cidadades.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <Filter className="absolute right-2 top-2.5 h-4 w-4 text-gray-500 pointer-events-none" />
-          </div>
+          <Select value={ciudadFilter || "todas"} onValueChange={(val) => setCiudadFilter(val === "todas" ? "" : val)}>
+            <SelectTrigger className="w-full min-w-[180px] border-gray-200 dark:border-border dark:bg-background dark:text-foreground focus:ring-waiwa-amber h-10">
+              <SelectValue placeholder="Ciudad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas las ciudades</SelectItem>
+              {cidadades.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">Inmueble</label>
-          <select
-            value={inmuebleId}
-            onChange={e => setInmuebleId(e.target.value)}
-            className="border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-tourism-teal dark:text-white dark:bg-background"
-          >
-            <option value="">Todos</option>
-            {inmuebles.map(i => <option key={i.id} value={i.id}>{i.nombre}</option>)}
-          </select>
+          <Select value={inmuebleId || "todos"} onValueChange={(val) => setInmuebleId(val === "todos" ? "" : val)}>
+            <SelectTrigger className="w-full min-w-[150px] border-gray-200 dark:border-border dark:bg-background dark:text-foreground focus:ring-waiwa-amber h-10">
+              <SelectValue placeholder="Inmueble" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              {inmuebles.map(i => <SelectItem key={i.id} value={i.id}>{i.nombre}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">Estado</label>
-          <select
-            value={estado}
-            onChange={e => setEstado(e.target.value as any)}
-            className="border rounded px-3 py-2 outline-none focus:ring-2 focus:ring-tourism-teal dark:text-white dark:bg-background"
-          >
-            <option value="todos">Todos</option>
-            <option value="ocupado">Ocupado</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="disponible">Disponible</option>
-            <option value="bloqueado">Bloqueado</option>
-          </select>
+          <Select value={estado} onValueChange={(val) => setEstado(val as any)}>
+            <SelectTrigger className="w-full min-w-[150px] border-gray-200 dark:border-border dark:bg-background dark:text-foreground focus:ring-waiwa-amber h-10">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              <SelectItem value="ocupado">Ocupado</SelectItem>
+              <SelectItem value="pendiente">Pendiente</SelectItem>
+              <SelectItem value="disponible">Disponible</SelectItem>
+              <SelectItem value="bloqueado">Bloqueado</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -437,19 +458,12 @@ const Availability: React.FC = () => {
 
         {/* Calendar toolbar: nav arrows + Today + month label */}
         {/* Legend */}
-        <div className="flex items-center gap-4 px-4 py-2 text-sm text-black dark:text-foreground border-t border-gray-100 dark:border-border bg-gray-50 dark:bg-muted flex-wrap">
-          {Object.entries(ESTADO_LABEL).map(([key, label]) => (
-            <div key={key} className="flex items-center gap-1.5">
-              <span className={`w-3 h-3 rounded-sm ${ESTADO_COLORS[key]?.bg ?? 'bg-gray-300'}`} />
-              <span>{label}</span>
-            </div>
-          ))}
-        </div>
+
         <div className="flex items-center gap-3 px-4 py-2 border-b border-gray-200 dark:border-border bg-gray-50 dark:bg-card">
           <button onClick={() => navWeek(-1)} className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-secondary text-gray-500 dark:text-gray-400 transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button onClick={goToday} className="text-sm font-medium text-gray-700 dark:text-foreground hover:text-waiwa-forest dark:hover:text-waiwa-amber px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-secondary transition-colors">
+          <button onClick={goToday} className="text-sm p-4 font-medium text-gray-700 dark:text-foreground hover:text-waiwa-forest dark:hover:text-waiwa-amber px-2 py-1 rounded-2xl px-2 border border-gray-200 dark:border-border hover:bg-gray-100 dark:hover:bg-secondary transition-colors">
             Hoy
           </button>
           <button onClick={() => navWeek(1)} className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-secondary text-gray-500 dark:text-gray-400 transition-colors">
@@ -467,7 +481,15 @@ const Availability: React.FC = () => {
           {/* Left sidebar */}
           <div className="flex-none flex flex-col border-r border-gray-200 dark:border-border bg-gray-50 dark:bg-card" style={{ width: SIDEBAR_W }}>
             {/* Search */}
-            <div className="px-3 py-2 border-b border-gray-200 dark:border-border bg-gray-50 dark:bg-card" style={{ height: 72, display: 'flex', alignItems: 'flex-end', paddingBottom: 8 }}>
+            <div className="flex flex-col px-3 py-3 gap-2 border-b border-gray-200 dark:border-border bg-gray-50 dark:bg-card" style={{ height: 133, display: 'flex', alignItems: 'flex-start', paddingBottom: 0 }}>
+              <div className="flex flex-col gap-1 justify-start items-start px-0 py-0 text-sm text-black dark:text-foreground border-t border-gray-100 dark:border-border">
+                {Object.entries(ESTADO_LABEL).map(([key, label]) => (
+                  <div key={key} className="flex items-center gap-1.5">
+                    <span className={`w-3 h-3 rounded-full ${ESTADO_COLORS[key]?.bg ?? 'bg-gray-300'}`} />
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
               <div className="relative w-full">
                 <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input
@@ -482,11 +504,11 @@ const Availability: React.FC = () => {
             {/* Property rows */}
             <div className="flex-1">
               {loading ? (
-                <div className="p-4 text-xs text-gray-400 text-center">Cargando...</div>
+                <div className="p1 text-xs text-gray-400 text-center">Cargando...</div>
               ) : error ? (
-                <div className="p-4 text-xs text-red-400 text-center">{error}</div>
+                <div className="p-1 text-xs text-red-400 text-center">{error}</div>
               ) : inmueblesFiltrados.length === 0 ? (
-                <div className="p-4 text-xs text-gray-400 text-center">Sin inmuebles</div>
+                <div className="p-1 text-xs text-gray-400 text-center">Sin inmuebles</div>
               ) : (
                 inmueblesFiltrados.map(inmueble => (
                   <div
@@ -509,16 +531,18 @@ const Availability: React.FC = () => {
             <div style={{ minWidth: fechas.length * CELL_W }}>
 
               {/* Date headers */}
-              <div className="sticky top-0 z-10 bg-white dark:bg-card border-b border-gray-200 dark:border-border">
+              <div className="sticky top-0 z-10 bg-white dark:bg-card border-b border-gray-200 dark:border-border flex flex-col justify-end" style={{ height: 133 }}>
                 {/* Month row */}
-                <div className="flex">
+                <div className="flex flex-1 items-end bg-gray-50/50 dark:bg-muted/30">
                   {monthGroups.map(g => (
                     <div
                       key={g.month}
                       style={{ width: g.dates.length * CELL_W }}
-                      className="text-xs font-bold text-gray-700 dark:text-foreground px-2 py-1 capitalize border-r border-gray-100 dark:border-border last:border-r-0"
+                      className="px-4 pb-7 capitalize border-r border-gray-200 dark:border-border last:border-r-0 flex flex-col justify-end"
                     >
-                      {g.month}
+                      <span className="text-xl font-bold tracking-tight text-waiwa-forest dark:text-waiwa-amber opacity-90">
+                        {g.month}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -533,7 +557,7 @@ const Availability: React.FC = () => {
                         className={`flex flex-col items-center justify-center py-0 border-r border-gray-100 dark:border-border last:border-r-0 ${isToday ? 'bg-[#0A3D2A]' : ''}`}
                       >
                         <span className={`text-[10px] font-medium uppercase tracking-wide ${isToday ? 'text-white' : 'text-gray-400 dark:text-muted-foreground'}`}>
-                          {format(d, 'EEE', { locale: es }).replace('.', '')}
+                          {format(d, 'EEEE', { locale: es })}
                         </span>
                         <span className={`text-sm font-bold ${isToday ? 'text-white' : 'text-gray-800 dark:text-foreground'}`}>
                           {format(d, 'd')}

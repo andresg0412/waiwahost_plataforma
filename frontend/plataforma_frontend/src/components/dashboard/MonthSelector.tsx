@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface MonthSelectorProps {
   selectedMonth: number;
@@ -8,7 +8,7 @@ interface MonthSelectorProps {
 
 const MonthSelector: React.FC<MonthSelectorProps> = ({ selectedMonth, setSelectedMonth }) => {
   const months = [
-    { value: -1, label: 'Todo' },
+    { value: -1, label: 'Todos los meses' },
     { value: 0, label: 'Enero' },
     { value: 1, label: 'Febrero' },
     { value: 2, label: 'Marzo' },
@@ -25,22 +25,18 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({ selectedMonth, setSelecte
 
   return (
     <div className="flex items-center space-x-2">
-      <label htmlFor="month-selector" className="text-sm font-medium text-gray-700">
-        Mes:
-      </label>
-      <select
-        id="month-selector"
-        name="month-selector"
-        className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-        value={selectedMonth}
-        onChange={(e) => setSelectedMonth(parseInt(e.target.value, 10))}
-      >
-        {months.map((month) => (
-          <option key={month.value} value={month.value}>
-            {month.label}
-          </option>
-        ))}
-      </select>
+      <Select value={String(selectedMonth)} onValueChange={(val) => setSelectedMonth(parseInt(val, 10))}>
+        <SelectTrigger className="w-full min-w-[160px] border-gray-200 dark:border-border dark:bg-background dark:text-foreground focus:ring-waiwa-amber h-10">
+          <SelectValue placeholder="Mes" />
+        </SelectTrigger>
+        <SelectContent>
+          {months.map((month) => (
+            <SelectItem key={month.value} value={String(month.value)}>
+              {month.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

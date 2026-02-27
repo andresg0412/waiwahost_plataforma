@@ -8,10 +8,10 @@ interface CreatePropertyButtonProps {
 const CreatePropertyButton: React.FC<CreatePropertyButtonProps> = ({ onClick, disabled }) => (
   <button
     onClick={disabled ? undefined : onClick}
-    className={`flex items-center gap-2 px-2 py-1 sm:px-4 sm:py-2 lg:px-4 lg:py-2 rounded-lg font-medium transition-colors duration-200 text-sm sm:text-lg lg:text-lg ${
+    className={`flex items-center gap-2 px-2 py-1 sm:px-4 sm:py-2 lg:px-4 lg:py-3 rounded-xl font-medium transition-colors duration-200 text-sm sm:text-lg lg:text-sm ${
       disabled 
         ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-        : 'bg-blue-600 text-white hover:bg-blue-700'
+        : 'bg-tourism-teal text-white hover:bg-tourism-teal/90'
     }`}
     title={disabled ? 'No tienes permisos para crear propiedades' : 'Crear nueva propiedad'}
     disabled={disabled}

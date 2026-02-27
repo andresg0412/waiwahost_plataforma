@@ -16,7 +16,7 @@ const CreateReservaButton: React.FC<CreateReservaButtonProps> = ({
       onClick={onClick}
       disabled={disabled}
       variant="default"
-      className={`flex items-center gap-2 bg-tourism-teal text-white ${
+      className={`flex items-center gap-2 bg-tourism-teal text-white rounded-xl ${
         disabled 
           ? 'opacity-50 cursor-not-allowed' 
           : 'hover:bg-tourism-teal/90'
